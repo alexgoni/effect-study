@@ -104,3 +104,37 @@ Node.js / JavaScript runtime
 └─ Effect runtime
    └─ Effect program
 ```
+
+## Effect의 오류 채널
+
+오류 채널은 실제 큐나 별도의 통신 객체가 아니라, Effect가 예상된 실패를 성공 값과 분리해 표현하고 전달하는 논리적인 경로다.
+
+```ts
+Effect.Effect<Success, Error, Requirements>;
+//            성공 채널 오류 채널
+```
+
+Effect 프로그램은 실행 결과를 두 경로로 전달할 수 있다.
+
+```text
+Effect 실행
+├─ 성공 → Success 값
+└─ 실패 → Error 값
+```
+
+`Effect.succeed`는 성공 채널에 값을 만들고, `Effect.fail`은 오류 채널에 값을 만든다. 오류 채널의 값은 처리 함수가 만날 때까지 다음 Effect로 전파된다.
+
+```ts
+Effect.Effect<never, string, never>;
+//                   ^^^^^^
+//                   오류 채널의 값 타입
+```
+
+오류 채널은 예상하고 복구할 수 있는 실패를 위한 것이다. 코드 버그나 깨진 불변식에서 발생하는 defect는 typed error 채널과 구분되며 `Cause`에서 함께 추적된다.
+
+`Exit`으로 실행 결과를 꺼내면 두 경로가 값으로 드러난다.
+
+```text
+Exit.Success(value)
+Exit.Failure(cause)
+```

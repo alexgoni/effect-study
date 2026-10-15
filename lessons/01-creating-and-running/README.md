@@ -63,6 +63,19 @@ Effect 내부 실행
 
 `Effect.sync`에 전달하는 함수는 예외를 던지지 않는 작업이어야 합니다. 여기서 예외가 발생하면 타입이 지정된 오류가 아니라 defect로 취급됩니다. 예외 가능성이 있는 동기 작업은 이후 `Effect.try`에서 다룹니다.
 
+### `Effect.fail`과 오류 채널
+
+`Effect.fail`은 예상된 실패를 Effect의 오류 채널에 기록합니다.
+
+```ts
+Effect.Effect<never, string, never>
+//            성공값 오류    의존성
+```
+
+이 Effect는 성공 값을 만들 수 없으므로 성공 타입이 `never`이고, 문자열 오류로 실패할 수 있습니다.
+
+`Effect.runSyncExit`은 실패를 예외로 던지지 않고 `Exit` 값으로 반환합니다. 실행 결과의 `_tag`는 `"Failure"`이며, 실패 정보는 `Cause`에 보관됩니다.
+
 ## 핵심 정리
 
 > Effect 값은 실행 결과가 아니라, runtime이 나중에 실행할 프로그램에 대한 설명이다.
@@ -73,7 +86,7 @@ Effect 내부 실행
 | --------- | -------------------- | --------------------------------------------------------------------------- |
 | 완료      | `01-succeed.ts`      | `Effect.succeed`로 성공하는 Effect를 만들고 `Effect.runPromise`로 실행한다. |
 | 완료      | `02-sync.ts`         | `Effect.sync`로 동기 부수 효과의 실행을 runtime까지 지연한다.               |
-| 진행 예정 | `03-fail.ts`         | `Effect.fail`로 예상된 실패를 오류 채널에 표현한다.                         |
+| 완료      | `03-fail.ts`         | `Effect.fail`로 예상된 실패를 오류 채널에 표현한다.                         |
 | 진행 예정 | `04-try.ts`          | `Effect.try`로 예외가 발생할 수 있는 동기 작업을 안전하게 감싼다.           |
 | 진행 예정 | `05-promise.ts`      | `Effect.promise`로 실패하지 않는 비동기 작업을 표현한다.                    |
 | 진행 예정 | `06-try-promise.ts`  | `Effect.tryPromise`로 Promise의 실패를 타입이 지정된 오류로 변환한다.       |
