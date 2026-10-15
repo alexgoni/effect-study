@@ -101,6 +101,24 @@ Exit
 └─ Failure → cause
 ```
 
+### `Effect.promise`와 비동기 실행
+
+`Effect.promise`는 실패하지 않는다고 약속한 비동기 작업을 Effect로 만듭니다. Promise를 만드는 함수는 Effect 생성 시점이 아니라 runtime이 프로그램을 실행할 때 호출됩니다.
+
+```text
+program 생성 완료
+Promise 생성
+{ result: '비동기 완료' }
+```
+
+작성한 `program`의 타입은 `Effect.Effect<string, never, never>`입니다.
+
+- Promise가 resolve하면 `string`이 성공 채널로 전달됩니다.
+- 오류 타입 `never`는 이 Promise가 reject하지 않는다는 계약을 나타냅니다.
+- `Effect.promise`에 전달한 Promise가 계약과 달리 reject하면 typed error가 아니라 defect가 됩니다.
+
+비동기 경계가 포함된 프로그램은 `runSync`가 아니라 `Effect.runPromise`로 실행하고 `await`으로 성공 값을 기다립니다. reject 가능성을 예상된 오류로 모델링하는 방법은 `Effect.tryPromise`에서 다룹니다.
+
 ## 핵심 정리
 
 > Effect 값은 실행 결과가 아니라, runtime이 나중에 실행할 프로그램에 대한 설명이다.
@@ -113,6 +131,6 @@ Exit
 | 완료      | `02-sync.ts`         | `Effect.sync`로 동기 부수 효과의 실행을 runtime까지 지연한다.               |
 | 완료      | `03-fail.ts`         | `Effect.fail`로 예상된 실패를 오류 채널에 표현한다.                         |
 | 완료      | `04-try.ts`          | `Effect.try`로 예외가 발생할 수 있는 동기 작업을 안전하게 감싼다.           |
-| 진행 예정 | `05-promise.ts`      | `Effect.promise`로 실패하지 않는 비동기 작업을 표현한다.                    |
+| 완료      | `05-promise.ts`      | `Effect.promise`로 실패하지 않는 비동기 작업을 표현한다.                    |
 | 진행 예정 | `06-try-promise.ts`  | `Effect.tryPromise`로 Promise의 실패를 타입이 지정된 오류로 변환한다.       |
 | 진행 예정 | `07-constructors.ts` | 생성 함수별 실행 시점과 성공 값, 오류 타입의 차이를 비교한다.               |
