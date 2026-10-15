@@ -76,6 +76,31 @@ Effect.Effect<never, string, never>
 
 `Effect.runSyncExit`은 실패를 예외로 던지지 않고 `Exit` 값으로 반환합니다. 실행 결과의 `_tag`는 `"Failure"`이며, 실패 정보는 `Cause`에 보관됩니다.
 
+### `Effect.try`와 JavaScript 예외
+
+`Effect.try`는 실행 중 예외를 던질 수 있는 동기 함수를 감쌉니다. 함수가 값을 반환하면 성공 채널로 전달하고, `throw`가 발생하면 예외를 잡아 Effect의 오류 채널로 변환합니다.
+
+```text
+JSON.parse 실행
+├─ 값 반환 → 성공 채널
+└─ throw    → UnknownError → 오류 채널
+```
+
+`Effect.sync`와의 선택 기준은 예상된 실패 여부입니다.
+
+- 예외를 던지지 않는다고 가정하는 동기 작업: `Effect.sync`
+- 예외 가능성을 예상된 오류로 모델링할 동기 작업: `Effect.try`
+
+`Effect.try`에 전달한 함수에서 계산 결과를 반환해야 그 값이 Effect의 성공 타입이 됩니다. 현재 실습의 `JSON.parse` 반환 타입은 `any`이며, 외부 데이터의 안전한 타입 검증은 Schema 단계에서 다룹니다.
+
+`Effect.runSyncExit`의 반환값에는 `exit`이라는 이름을 사용했습니다. `Exit`은 성공 값 자체가 아니라 Effect 실행이 성공 또는 실패 중 어떤 상태로 끝났는지를 나타냅니다.
+
+```text
+Exit
+├─ Success → value
+└─ Failure → cause
+```
+
 ## 핵심 정리
 
 > Effect 값은 실행 결과가 아니라, runtime이 나중에 실행할 프로그램에 대한 설명이다.
@@ -87,7 +112,7 @@ Effect.Effect<never, string, never>
 | 완료      | `01-succeed.ts`      | `Effect.succeed`로 성공하는 Effect를 만들고 `Effect.runPromise`로 실행한다. |
 | 완료      | `02-sync.ts`         | `Effect.sync`로 동기 부수 효과의 실행을 runtime까지 지연한다.               |
 | 완료      | `03-fail.ts`         | `Effect.fail`로 예상된 실패를 오류 채널에 표현한다.                         |
-| 진행 예정 | `04-try.ts`          | `Effect.try`로 예외가 발생할 수 있는 동기 작업을 안전하게 감싼다.           |
+| 완료      | `04-try.ts`          | `Effect.try`로 예외가 발생할 수 있는 동기 작업을 안전하게 감싼다.           |
 | 진행 예정 | `05-promise.ts`      | `Effect.promise`로 실패하지 않는 비동기 작업을 표현한다.                    |
 | 진행 예정 | `06-try-promise.ts`  | `Effect.tryPromise`로 Promise의 실패를 타입이 지정된 오류로 변환한다.       |
 | 진행 예정 | `07-constructors.ts` | 생성 함수별 실행 시점과 성공 값, 오류 타입의 차이를 비교한다.               |
