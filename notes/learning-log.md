@@ -163,3 +163,71 @@ Effect.tryPromise(() => Promise<string>)
 catch가 NetworkError 반환
 → Effect<string, NetworkError, never>
 ```
+
+## `map`은 어떻게 Effect를 연결하는가
+
+`map`을 연속해서 사용하는 모습은 메서드 체이닝과 비슷하지만, 핵심은 기존 Effect를 변경하는 것이 아니라 이전 Effect와 변환 함수를 참조하는 새로운 Effect를 만드는 것이다.
+
+```text
+source Effect
+    ↓ map(f)
+source와 f를 기억하는 새 Effect
+    ↓ map(g)
+이전 Effect와 g를 기억하는 새 Effect
+```
+
+`Effect.map(source, f)`를 호출하는 시점에는 `source`와 함수 `f`를 새 Effect에 저장할 뿐, 둘을 실행하지 않는다.
+
+Effect runtime이 합성된 Effect를 실행하면 먼저 `source`를 실행한다. `source`가 값 `A`로 성공하면 runtime이 저장해 둔 함수를 일반적인 JavaScript 함수 호출인 `f(A)` 형태로 직접 호출한다. 이 함수 호출로 `A`가 `f`의 첫 번째 매개변수에 바인딩된다.
+
+```text
+Effect.map(source, f)
+    ↓ source와 f를 저장
+runtime이 source 실행
+    ↓ A로 성공
+runtime이 f(A) 호출
+    ↓ B 반환
+합성된 Effect가 B로 성공
+```
+
+예를 들어 `source`가 `10`으로 성공하고 저장된 함수가 `multiply2AndString`이라면 runtime이 실제로 호출하는 형태는 `multiply2AndString(10)`이다.
+
+`source`가 실패하면 성공 값을 얻지 못하므로 `f`를 호출하지 않고 실패를 그대로 전달한다.
+
+### Effect 4 내부 구현
+
+Effect 4에서 `map`은 다음과 같이 `ContImpl`을 만든다.
+
+```ts
+new ContImpl(self, mapCont, f)
+```
+
+- `self`: 먼저 실행할 원본 Effect
+- `mapCont`: 원본 Effect가 성공한 뒤 실행할 내부 continuation
+- `f`: 사용자가 `map`에 전달한 변환 함수
+
+`ContImpl`은 `self`와 `f`를 내부에 저장한다. runtime은 `self`를 먼저 실행하고, 성공 값을 얻으면 저장해 둔 `mapCont`를 호출한다.
+
+`mapCont`의 실제 구현은 성공 값 `value`를 전달받아 `payload`에 저장된 `f`를 호출한다.
+
+```ts
+const mapCont = function(this: { readonly payload: any }, value: any, fiber: FiberImpl) {
+  const f = this.payload
+  return fiber.succeedWith(continuationMarksStack ? f(value) : internalCall(() => f(value)))
+}
+```
+
+여기서 `this.payload`는 `new ContImpl(self, mapCont, f)`를 만들 때 저장한 함수 `f`이고, `value`는 `self`의 성공 값이다. 스택 추적을 위한 분기를 제외하면 핵심은 `f(value)`이며, 그 반환값을 `fiber.succeedWith`에 전달해 다음 성공 값으로 만든다.
+
+```text
+new ContImpl(source, mapCont, multiply2AndString)
+                            ↓ payload에 함수 저장
+
+source가 10으로 성공
+→ mapCont(value = 10) 호출
+→ f = this.payload
+→ f(value)
+→ multiply2AndString(10)
+```
+
+따라서 `map`은 실행 결과를 즉시 꺼내는 함수가 아니라 성공 이후에 실행할 변환 단계를 프로그램 설명에 연결하는 합성 함수다. `Effect.map(source, f)`, `source.pipe(Effect.map(f))`, `pipe(source, Effect.map(f))`는 표현 방식만 다르고 같은 연결을 만든다.
