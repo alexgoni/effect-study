@@ -139,6 +139,21 @@ Promise 실행
 
 `Effect.runPromiseExit`은 비동기 실행이 끝날 때까지 기다린 뒤 `Exit`을 반환합니다. 따라서 실패도 프로그램 밖으로 던져지지 않고 `_tag: "Failure"`와 `cause`를 통해 값으로 확인할 수 있습니다.
 
+### Effect 생성 함수 비교
+
+`07-constructors.ts`에서 지금까지 사용한 생성 함수들을 한곳에 모아 성공 타입, 오류 타입, 실행 시점을 비교했습니다.
+
+| 생성 함수           | 나타내는 작업                        | 성공 타입         | 기본 오류 타입   | 콜백 실행 시점  |
+| ------------------- | ------------------------------------ | ----------------- | ---------------- | --------------- |
+| `Effect.succeed`    | 이미 준비된 성공 값                  | 전달한 값의 타입  | `never`          | 콜백 없음       |
+| `Effect.fail`       | 이미 준비된 예상된 실패              | `never`           | 전달한 오류 타입 | 콜백 없음       |
+| `Effect.sync`       | 실패하지 않는다고 가정한 동기 작업   | 반환값 타입       | `never`          | Effect 실행 시점 |
+| `Effect.try`        | 예외가 발생할 수 있는 동기 작업      | 반환값 타입       | `UnknownError`   | Effect 실행 시점 |
+| `Effect.promise`    | 실패하지 않는다고 가정한 비동기 작업 | Promise 성공 타입 | `never`          | Effect 실행 시점 |
+| `Effect.tryPromise` | reject할 수 있는 비동기 작업          | Promise 성공 타입 | `UnknownError`   | Effect 실행 시점 |
+
+`new Promise<string>(...)`의 `string`은 resolve 값, 즉 Effect의 성공 타입을 지정합니다. reject에 전달한 값의 타입은 `Promise<T>`에 포함되지 않으므로 `Effect.tryPromise`의 기본 오류 타입은 `UnknownError`입니다.
+
 ## 핵심 정리
 
 > Effect 값은 실행 결과가 아니라, runtime이 나중에 실행할 프로그램에 대한 설명이다.
@@ -153,4 +168,4 @@ Promise 실행
 | 완료      | `04-try.ts`          | `Effect.try`로 예외가 발생할 수 있는 동기 작업을 안전하게 감싼다.           |
 | 완료      | `05-promise.ts`      | `Effect.promise`로 실패하지 않는 비동기 작업을 표현한다.                    |
 | 완료      | `06-try-promise.ts`  | `Effect.tryPromise`로 Promise rejection을 `UnknownError`로 변환한다.        |
-| 진행 예정 | `07-constructors.ts` | 생성 함수별 실행 시점과 성공 값, 오류 타입의 차이를 비교한다.               |
+| 완료      | `07-constructors.ts` | 생성 함수별 실행 시점과 성공 값, 오류 타입의 차이를 비교한다.               |
