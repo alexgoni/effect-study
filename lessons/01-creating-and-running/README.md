@@ -119,6 +119,26 @@ Promise 생성
 
 비동기 경계가 포함된 프로그램은 `runSync`가 아니라 `Effect.runPromise`로 실행하고 `await`으로 성공 값을 기다립니다. reject 가능성을 예상된 오류로 모델링하는 방법은 `Effect.tryPromise`에서 다룹니다.
 
+### `Effect.tryPromise`와 Promise rejection
+
+`Effect.tryPromise`는 reject할 수 있는 Promise를 Effect로 감싸고, rejection을 예상된 실패로 다룹니다.
+
+```text
+Promise 실행
+├─ resolve → 성공 채널
+└─ reject  → UnknownError → 오류 채널
+```
+
+이번 실습에서 추론된 타입은 `Effect.Effect<string, UnknownError, never>`입니다.
+
+- `string`: Promise가 resolve할 때 얻는 성공 값
+- `UnknownError`: Promise가 reject할 때 사용하는 기본 오류 타입
+- `never`: 실행에 필요한 외부 서비스가 없음
+
+`UnknownError`는 `reject(Error(...))`를 보고 추론한 타입이 아닙니다. JavaScript의 `Promise<T>`는 resolve 값의 타입만 표현하고 rejection 값의 타입은 표현하지 않기 때문에, `Effect.tryPromise`가 기본 오류 타입으로 제공합니다. 오류 타입을 직접 정하려면 `try`와 `catch`를 받는 형태를 사용해 rejection 값을 도메인 오류로 변환할 수 있습니다.
+
+`Effect.runPromiseExit`은 비동기 실행이 끝날 때까지 기다린 뒤 `Exit`을 반환합니다. 따라서 실패도 프로그램 밖으로 던져지지 않고 `_tag: "Failure"`와 `cause`를 통해 값으로 확인할 수 있습니다.
+
 ## 핵심 정리
 
 > Effect 값은 실행 결과가 아니라, runtime이 나중에 실행할 프로그램에 대한 설명이다.
@@ -132,5 +152,5 @@ Promise 생성
 | 완료      | `03-fail.ts`         | `Effect.fail`로 예상된 실패를 오류 채널에 표현한다.                         |
 | 완료      | `04-try.ts`          | `Effect.try`로 예외가 발생할 수 있는 동기 작업을 안전하게 감싼다.           |
 | 완료      | `05-promise.ts`      | `Effect.promise`로 실패하지 않는 비동기 작업을 표현한다.                    |
-| 진행 예정 | `06-try-promise.ts`  | `Effect.tryPromise`로 Promise의 실패를 타입이 지정된 오류로 변환한다.       |
+| 완료      | `06-try-promise.ts`  | `Effect.tryPromise`로 Promise rejection을 `UnknownError`로 변환한다.        |
 | 진행 예정 | `07-constructors.ts` | 생성 함수별 실행 시점과 성공 값, 오류 타입의 차이를 비교한다.               |

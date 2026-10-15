@@ -138,3 +138,28 @@ Effect.Effect<never, string, never>;
 Exit.Success(value)
 Exit.Failure(cause)
 ```
+
+## `tryPromise`와 `UnknownError`
+
+`Effect.tryPromise`의 기본 오류 타입인 `UnknownError`는 `reject`에 전달한 값을 분석해서 추론한 타입이 아니다. Promise의 rejection 타입을 알 수 없을 때 `tryPromise`가 기본으로 제공하는 오류 타입이다.
+
+```ts
+Promise<string>;
+//      ^^^^^^ resolve되는 성공 값의 타입만 표현
+```
+
+TypeScript의 `Promise<T>`에는 reject 타입을 나타내는 타입 매개변수가 없다. 같은 `Promise<string>`도 `Error`, 문자열, 숫자 등 어떤 값으로든 reject될 수 있으므로 Effect는 기본적으로 rejection을 `UnknownError`로 감싼다.
+
+```text
+Effect.tryPromise(() => Promise<string>)
+                       │
+                       ├─ 성공 타입 string은 Promise에서 추론
+                       └─ 오류 타입 UnknownError는 tryPromise가 제공
+```
+
+`tryPromise`에 `try`와 `catch`를 함께 제공하면 `catch`가 반환하는 값에서 구체적인 오류 타입을 추론할 수 있다.
+
+```text
+catch가 NetworkError 반환
+→ Effect<string, NetworkError, never>
+```
