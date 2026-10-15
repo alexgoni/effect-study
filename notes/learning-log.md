@@ -66,3 +66,41 @@ Effect 값은 일반적인 데이터처럼 함수에 전달하거나 함수에�
 ## 핵심 정리
 
 > 작업을 바로 실행하지 않고 값으로 만든 뒤, 조합 가능한 상태로 유지하다가 프로그램의 경계에서 실행한다.
+
+## Effect runtime
+
+Effect runtime은 Effect 객체로 만든 프로그램을 해석하고 실제로 실행하는 실행 엔진이다.
+
+```text
+Effect 객체 = 실행 계획
+Effect runtime = 계획을 읽고 실행하는 엔진
+```
+
+`Effect.sync` 같은 생성 함수는 실행할 작업을 Effect 객체로 만든다. `Effect.runSync`와 `Effect.runPromise`는 이 객체를 runtime에 전달하는 실행 진입점이다.
+
+```text
+runSync / runPromise
+        ↓
+Effect runtime 시작
+        ↓
+Effect 객체 해석
+        ↓
+성공 값 또는 실패 결과 생성
+```
+
+Effect runtime은 프로그램이 커지면 다음 작업도 담당한다.
+
+- Effect의 실행 순서와 성공·실패 처리
+- Fiber 생성과 스케줄링
+- 필요한 Service 제공
+- 동시 실행과 interruption 관리
+- 자원의 획득과 해제
+- 로깅과 tracing
+
+Effect runtime은 JavaScript runtime과 같은 것이 아니다. Node.js와 V8이 제공하는 JavaScript runtime 위에 Effect 라이브러리가 구현한 실행 시스템이다.
+
+```text
+Node.js / JavaScript runtime
+└─ Effect runtime
+   └─ Effect program
+```
