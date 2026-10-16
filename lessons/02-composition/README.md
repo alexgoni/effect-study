@@ -74,6 +74,30 @@ Effect<number, string, never>
 
 Effect를 반환하는 함수는 모든 분기에서 Effect를 반환해야 합니다. 실패 분기에서 `Effect.fail`을 반환했다면 성공 분기의 일반 값도 `Effect.succeed`로 감싸 같은 반환 문맥을 유지합니다.
 
+### `pipe`와 data-last 합성
+
+`pipe`는 첫 번째 값을 다음 함수에 전달하고, 각 함수의 반환값을 그다음 함수에 차례로 전달합니다. Effect 내부의 성공 값을 직접 꺼내거나 Effect를 실행하지는 않습니다.
+
+```text
+source Effect
+    ↓ Effect.map(number → number)
+새로운 Effect
+    ↓ Effect.map(number → number)
+새로운 Effect
+    ↓ Effect.map(number → string)
+program Effect
+```
+
+`Effect.map(source, f)`는 source를 직접 받는 data-first 형태이고, `Effect.map(f)`는 source를 기다리는 data-last 함수입니다. `pipe(source, Effect.map(f))`는 data-last 함수에 source를 전달합니다.
+
+```text
+Effect.map(source, f)
+= Effect.map(f)(source)
+= pipe(source, Effect.map(f))
+```
+
+`pipe`로 Effect를 합성하는 시점에는 실행 계획만 연결됩니다. 연결된 `map` 콜백은 완성된 `program`을 runtime에 전달할 때 실행됩니다.
+
 ## 실행 원칙
 
 합성 과정에서는 `runSync`나 `runPromise`를 호출하지 않습니다. 각 단계는 새로운 Effect 값을 만들 뿐이며, 완성된 `program`만 애플리케이션 경계에서 실행합니다.
@@ -96,7 +120,7 @@ Effect를 반환하는 함수는 모든 분기에서 Effect를 반환해야 합�
 | --------- | -------------------------- | ---------------------------------------------------------------- |
 | 완료      | `01-map.ts`                | `map`으로 성공 값을 일반 값으로 변환한다.                        |
 | 완료      | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.         |
-| 진행 예정 | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다.    |
+| 완료      | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다.    |
 | 진행 예정 | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.       |
 | 진행 예정 | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.      |
 | 진행 예정 | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.        |

@@ -199,7 +199,7 @@ runtime이 f(A) 호출
 Effect 4에서 `map`은 다음과 같이 `ContImpl`을 만든다.
 
 ```ts
-new ContImpl(self, mapCont, f)
+new ContImpl(self, mapCont, f);
 ```
 
 - `self`: 먼저 실행할 원본 Effect
@@ -211,10 +211,10 @@ new ContImpl(self, mapCont, f)
 `mapCont`의 실제 구현은 성공 값 `value`를 전달받아 `payload`에 저장된 `f`를 호출한다.
 
 ```ts
-const mapCont = function(this: { readonly payload: any }, value: any, fiber: FiberImpl) {
-  const f = this.payload
-  return fiber.succeedWith(continuationMarksStack ? f(value) : internalCall(() => f(value)))
-}
+const mapCont = function (this: { readonly payload: any }, value: any, fiber: FiberImpl) {
+  const f = this.payload;
+  return fiber.succeedWith(continuationMarksStack ? f(value) : internalCall(() => f(value)));
+};
 ```
 
 여기서 `this.payload`는 `new ContImpl(self, mapCont, f)`를 만들 때 저장한 함수 `f`이고, `value`는 `self`의 성공 값이다. 스택 추적을 위한 분기를 제외하면 핵심은 `f(value)`이며, 그 반환값을 `fiber.succeedWith`에 전달해 다음 성공 값으로 만든다.
@@ -231,3 +231,24 @@ source가 10으로 성공
 ```
 
 따라서 `map`은 실행 결과를 즉시 꺼내는 함수가 아니라 성공 이후에 실행할 변환 단계를 프로그램 설명에 연결하는 합성 함수다. `Effect.map(source, f)`, `source.pipe(Effect.map(f))`, `pipe(source, Effect.map(f))`는 표현 방식만 다르고 같은 연결을 만든다.
+
+### data-first와 data-last를 모두 지원하는 이유
+
+data-first는 Effect 하나를 직접 변환할 때 호출 관계가 명시적이다.
+
+```ts
+Effect.map(source, f);
+```
+
+data-last는 원본 Effect를 나중에 받을 함수가 되므로 `pipe` 안에서 합성할 수 있다.
+
+```ts
+pipe(source, Effect.map(f));
+```
+
+Effect는 직접 호출의 편의성과 함수 합성의 편의성을 모두 제공하기 위해 많은 연산을 두 방식으로 노출한다. 두 방식의 의미와 결과는 같으며, 내부에서는 `dual`이 인자 개수를 보고 같은 구현을 호출한다.
+
+```text
+인자 2개: body(source, f)
+인자 1개: source => body(source, f)
+```
