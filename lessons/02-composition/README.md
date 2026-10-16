@@ -50,6 +50,30 @@ Effect<string, never, never>
 
 원본 Effect는 변경되지 않으며 오류 타입과 의존성 타입도 그대로 유지됩니다. 변환 함수는 `map`을 호출할 때 바로 실행되는 것이 아니라, 합성된 Effect를 runtime에 전달했을 때 실행됩니다.
 
+### `Effect.flatMap`으로 다음 Effect 연결하기
+
+콜백이 일반 값이 아니라 Effect를 반환하면 `map`은 반환된 Effect를 성공 값으로 취급하므로 Effect가 중첩됩니다.
+
+```text
+map
+Effect<number, never, never>
+    + (number → Effect<number, string, never>)
+    ↓
+Effect<Effect<number, string, never>, never, never>
+```
+
+`flatMap`은 앞 Effect의 성공 값을 콜백에 전달하고, 콜백이 반환한 Effect를 다음 실행 단계로 연결해 하나의 Effect로 평탄화합니다.
+
+```text
+flatMap
+Effect<number, never, never>
+    + (number → Effect<number, string, never>)
+    ↓
+Effect<number, string, never>
+```
+
+Effect를 반환하는 함수는 모든 분기에서 Effect를 반환해야 합니다. 실패 분기에서 `Effect.fail`을 반환했다면 성공 분기의 일반 값도 `Effect.succeed`로 감싸 같은 반환 문맥을 유지합니다.
+
 ## 실행 원칙
 
 합성 과정에서는 `runSync`나 `runPromise`를 호출하지 않습니다. 각 단계는 새로운 Effect 값을 만들 뿐이며, 완성된 `program`만 애플리케이션 경계에서 실행합니다.
@@ -71,7 +95,7 @@ Effect<string, never, never>
 | 상태      | 파일                       | 학습 내용                                                        |
 | --------- | -------------------------- | ---------------------------------------------------------------- |
 | 완료      | `01-map.ts`                | `map`으로 성공 값을 일반 값으로 변환한다.                        |
-| 진행 예정 | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.         |
+| 완료      | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.         |
 | 진행 예정 | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다.    |
 | 진행 예정 | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.       |
 | 진행 예정 | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.      |
