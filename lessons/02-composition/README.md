@@ -98,6 +98,20 @@ Effect.map(source, f)
 
 `pipe`로 Effect를 합성하는 시점에는 실행 계획만 연결됩니다. 연결된 `map` 콜백은 완성된 `program`을 runtime에 전달할 때 실행됩니다.
 
+### `Effect.andThen`으로 순서 연결하기
+
+두 번째 작업이 첫 번째 성공 값에 의존하지 않는다면 `Effect.andThen`에 다음 Effect 자체를 전달해 실행 순서만 연결할 수 있습니다.
+
+```text
+첫 번째 Effect<number, E1, R1>
+    ↓ 성공 값 number는 버림
+두 번째 Effect<string, E2, R2>
+    ↓
+전체 Effect<string, E1 | E2, R1 | R2>
+```
+
+첫 번째 Effect가 성공해야 두 번째 Effect가 실행됩니다. 전체 프로그램의 성공 값은 두 번째 Effect의 성공 값입니다. 첫 번째 Effect가 실패하면 두 번째 Effect는 실행되지 않습니다.
+
 ## 실행 원칙
 
 합성 과정에서는 `runSync`나 `runPromise`를 호출하지 않습니다. 각 단계는 새로운 Effect 값을 만들 뿐이며, 완성된 `program`만 애플리케이션 경계에서 실행합니다.
@@ -116,15 +130,15 @@ Effect.map(source, f)
 
 ## 학습 내역
 
-| 상태      | 파일                       | 학습 내용                                                        |
-| --------- | -------------------------- | ---------------------------------------------------------------- |
-| 완료      | `01-map.ts`                | `map`으로 성공 값을 일반 값으로 변환한다.                        |
-| 완료      | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.         |
-| 완료      | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다.    |
-| 진행 예정 | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.       |
-| 진행 예정 | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.      |
-| 진행 예정 | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.        |
-| 진행 예정 | `07-composition-styles.ts` | 같은 프로그램을 `flatMap`과 `gen`으로 작성해 구조를 비교한다.    |
+| 상태      | 파일                       | 학습 내용                                                     |
+| --------- | -------------------------- | ------------------------------------------------------------- |
+| 완료      | `01-map.ts`                | `map`으로 성공 값을 일반 값으로 변환한다.                     |
+| 완료      | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.      |
+| 완료      | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다. |
+| 완료      | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.    |
+| 진행 예정 | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.  |
+| 진행 예정 | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.     |
+| 진행 예정 | `07-composition-styles.ts` | 같은 프로그램을 `flatMap`과 `gen`으로 작성해 구조를 비교한다. |
 
 ## 단계 완료 조건
 
