@@ -133,6 +133,17 @@ Effect.gen 내부 return B
 
 generator 코드는 순차적으로 보이지만 `Effect.gen`을 호출할 때 작업이 실행되는 것은 아닙니다. 완성된 Effect를 runtime에 전달할 때 generator와 각 Effect가 실행됩니다.
 
+### 실패 시 short-circuit
+
+`Effect.gen`에서 `yield*`한 Effect가 실패하면 generator는 성공 값으로 재개되지 않으며 이후 코드는 실행되지 않습니다. 실패 이후에 선언된 Effect 값이 이미 존재해도 runtime이 해당 실행 단계까지 도달하지 않으므로 내부 callback은 실행되지 않습니다.
+
+```text
+첫 단계 성공
+→ 중간 단계 실패
+→ 이후 단계 건너뜀
+→ 전체 프로그램 실패
+```
+
 ## 실행 원칙
 
 합성 과정에서는 `runSync`나 `runPromise`를 호출하지 않습니다. 각 단계는 새로운 Effect 값을 만들 뿐이며, 완성된 `program`만 애플리케이션 경계에서 실행합니다.
@@ -158,7 +169,7 @@ generator 코드는 순차적으로 보이지만 `Effect.gen`을 호출할 때 �
 | 완료      | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다. |
 | 완료      | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.    |
 | 완료      | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.  |
-| 진행 예정 | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.     |
+| 완료      | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.     |
 | 진행 예정 | `07-composition-styles.ts` | 같은 프로그램을 `flatMap`과 `gen`으로 작성해 구조를 비교한다. |
 
 ## 단계 완료 조건
