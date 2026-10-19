@@ -405,3 +405,24 @@ await            yield*
 ```
 
 핵심은 순차적으로 읽히는 코드를 작성하면서도 중간에 `runSync`나 `runPromise`를 호출하지 않고, 실행 제어와 실패 처리를 Effect runtime에 남겨두는 것이다.
+
+## 오류 타입이 있는 Effect를 `runSync`로 실행하면
+
+`runSync`의 타입은 오류 타입 `E`가 `never`일 것을 요구하지 않는다.
+
+```ts
+runSync<A, E>(effect: Effect<A, E>): A
+```
+
+성공하면 `A`를 반환하지만 실패하면 반환하지 않고 JavaScript의 `throw` 경로로 빠져나간다. Effect 4.0.5의 구현은 먼저 `runSyncExit`으로 `Exit`을 만든 뒤, 실패하면 `causeSquash(exit.cause)`의 결과를 던진다.
+
+```text
+runSync(effect)
+→ runSyncExit(effect)
+├─ Success(value) → value 반환
+└─ Failure(cause) → causeSquash(cause)를 throw
+```
+
+단순한 `Effect.fail("양수가 아닙니다")`의 경우 이 버전의 `causeSquash`는 오류 값인 문자열 자체를 반환하므로 `runSync`는 그 문자열을 던진다. 이 순간 오류 타입 `E`는 Effect의 typed error 채널이 아니라 JavaScript 예외 경계로 바뀐다.
+
+`runSyncExit`을 사용하면 실패를 던지지 않고 `Exit<A, E>` 값으로 유지하므로 성공과 실패를 모두 타입이 있는 데이터로 비교할 수 있다.

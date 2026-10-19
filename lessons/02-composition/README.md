@@ -144,6 +144,25 @@ generator 코드는 순차적으로 보이지만 `Effect.gen`을 호출할 때 �
 → 전체 프로그램 실패
 ```
 
+### 파이프라인과 generator 방식 비교
+
+같은 프로그램을 `pipe`와 `Effect.gen`으로 각각 작성해도 성공 타입, 오류 타입, 의존성 타입과 실행 결과는 같습니다.
+
+```text
+pipe 방식                         generator 방식
+───────────────────────────────  ─────────────────────────────
+Effect.flatMap(validatePositive)  yield* validatePositive(value)
+Effect.map(multiply2)              return multiply2(value)
+```
+
+두 프로그램 모두 다음 타입으로 합성됐습니다.
+
+```ts
+Effect.Effect<number, string, never>;
+```
+
+`pipe` 방식은 변환 단계가 짧고 선형일 때 함수의 흐름을 드러내기 좋습니다. `Effect.gen` 방식은 여러 중간 값을 이름 붙여 재사용하거나 조건문과 반복문이 필요한 업무 흐름에 읽기 쉽습니다. 어느 방식을 선택해도 중간에 실행하지 않고 완성된 Effect만 경계에서 실행합니다.
+
 ## 실행 원칙
 
 합성 과정에서는 `runSync`나 `runPromise`를 호출하지 않습니다. 각 단계는 새로운 Effect 값을 만들 뿐이며, 완성된 `program`만 애플리케이션 경계에서 실행합니다.
@@ -162,15 +181,15 @@ generator 코드는 순차적으로 보이지만 `Effect.gen`을 호출할 때 �
 
 ## 학습 내역
 
-| 상태      | 파일                       | 학습 내용                                                     |
-| --------- | -------------------------- | ------------------------------------------------------------- |
-| 완료      | `01-map.ts`                | `map`으로 성공 값을 일반 값으로 변환한다.                     |
-| 완료      | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.      |
-| 완료      | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다. |
-| 완료      | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.    |
-| 완료      | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.  |
-| 완료      | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.     |
-| 진행 예정 | `07-composition-styles.ts` | 같은 프로그램을 `flatMap`과 `gen`으로 작성해 구조를 비교한다. |
+| 상태 | 파일                       | 학습 내용                                                     |
+| ---- | -------------------------- | ------------------------------------------------------------- |
+| 완료 | `01-map.ts`                | `map`으로 성공 값을 일반 값으로 변환한다.                     |
+| 완료 | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.      |
+| 완료 | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다. |
+| 완료 | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.    |
+| 완료 | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.  |
+| 완료 | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.     |
+| 완료 | `07-composition-styles.ts` | 같은 프로그램을 `flatMap`과 `gen`으로 작성해 구조를 비교한다. |
 
 ## 단계 완료 조건
 
