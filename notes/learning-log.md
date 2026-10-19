@@ -426,3 +426,87 @@ runSync(effect)
 단순한 `Effect.fail("양수가 아닙니다")`의 경우 이 버전의 `causeSquash`는 오류 값인 문자열 자체를 반환하므로 `runSync`는 그 문자열을 던진다. 이 순간 오류 타입 `E`는 Effect의 typed error 채널이 아니라 JavaScript 예외 경계로 바뀐다.
 
 `runSyncExit`을 사용하면 실패를 던지지 않고 `Exit<A, E>` 값으로 유지하므로 성공과 실패를 모두 타입이 있는 데이터로 비교할 수 있다.
+
+## 조건문에서 반환한 Effect가 유니온으로 추론되는 이유
+
+함수의 분기마다 서로 다른 Effect를 반환하면 TypeScript는 각 `return` 표현식의 타입을 그대로 합쳐 함수 반환 타입을 유니온으로 추론한다.
+
+```text
+성공 분기 → Effect<number, never, never>
+실패 분기 → Effect<never, InvalidQuantity, never>
+
+추론 결과
+→ Effect<number, never, never> | Effect<never, InvalidQuantity, never>
+```
+
+이는 Effect 프로그램이 두 개로 나뉘어 실행된다는 뜻이 아니다. 두 분기 모두 다음의 통합된 타입에 할당할 수 있다.
+
+```ts
+Effect.Effect<number, InvalidQuantity, never>
+```
+
+`never`는 가능한 값이 없다는 뜻이므로, 성공 Effect의 `never` 오류는 `InvalidQuantity` 오류 범위에 포함될 수 있고 실패 Effect의 `never` 성공은 `number` 성공 범위에 포함될 수 있다. 함수의 반환 타입을 명시하면 이 통합된 인터페이스를 드러낼 수 있다.
+
+## 실패 결과에는 여러 단계의 `_tag`가 있다
+
+`runSyncExit`의 결과에서 바로 보이는 `_tag: "Failure"`는 도메인 오류의 태그가 아니라 `Exit`가 실패했다는 태그다. 실제 typed error는 실패 원인을 표현하는 `Cause` 안에 들어 있다.
+
+```text
+Exit.Failure
+└─ Cause
+   └─ Fail reason
+      └─ InvalidQuantity
+```
+
+`_id`와 `_tag`의 역할은 다르다.
+
+- `_id`: 값이 어떤 Effect 자료구조인지 나타낸다. 예: `"Exit"`, `"Cause"`
+- `_tag`: 그 자료구조가 가질 수 있는 경우 중 현재 경우를 나타낸다.
+
+`Exit<A, E>`는 개념적으로 성공 값 `A` 또는 실패 원인 `Cause<E>`를 담는다.
+
+```ts
+type Exit<A, E> =
+  | Success<A>
+  | Failure<Cause<E>>;
+```
+
+```text
+Exit.Success → value: A
+Exit.Failure → cause: Cause<E>
+```
+
+따라서 하나의 실패 결과에는 서로 역할이 다른 태그가 존재할 수 있다.
+
+- `Failure`: 실행 결과인 `Exit`의 성공·실패 구분
+- `Fail`: `Cause` 안에서 예상된 오류라는 구분
+- `InvalidQuantity`: 애플리케이션이 정의한 도메인 오류 구분
+
+실패 출력을 읽을 때는 바깥에서 안쪽으로 내려간다.
+
+1. `Exit._tag`로 실행의 성공과 실패를 확인한다.
+2. 실패라면 `cause`로 들어간다.
+3. Cause의 reason 태그로 실패의 성격을 확인한다.
+   - `Fail`: 오류 채널 `E`로 표현된 예상된 오류
+   - `Die`: 오류 채널에 포함되지 않는 defect
+   - `Interrupt`: Fiber 실행 중단
+4. `Fail.error`, `Die.defect`, `Interrupt.fiberId`에서 세부 값을 읽는다.
+
+Cause는 동시 실행 등에서 여러 실패 원인을 보존할 수 있으므로 직렬화된 출력의 `failures`는 배열이다.
+
+예를 들어 `Effect<number, InvalidQuantity, never>`가 실패하면 타입 매개변수 `E`인 `InvalidQuantity`는 다음 위치에 대응한다.
+
+```text
+Exit.Failure
+└─ cause
+   └─ Fail
+      └─ error: InvalidQuantity
+```
+
+따라서 다음 실패 출력은 “실행 결과가 실패했고, 원인은 예상된 오류이며, 실제 도메인 오류는 수량 `0`을 가진 `InvalidQuantity`다”라고 읽는다.
+
+```text
+Failure          → Exit의 실행 결과
+Fail             → Cause 안의 원인 종류
+InvalidQuantity  → 실제 도메인 오류 종류
+```
