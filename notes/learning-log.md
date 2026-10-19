@@ -252,3 +252,156 @@ Effect는 직접 호출의 편의성과 함수 합성의 편의성을 모두 제
 인자 2개: body(source, f)
 인자 1개: source => body(source, f)
 ```
+
+## JavaScript generator와 `yield` 문법
+
+generator는 실행을 중간에 멈췄다가 다시 이어갈 수 있는 함수다. 일반 함수와 달리 `function*`으로 선언하며, 호출하면 함수 본문을 즉시 끝까지 실행하는 대신 iterator를 반환한다.
+
+```ts
+function* numbers() {
+  yield 1;
+  yield 2;
+  return 3;
+}
+
+const iterator = numbers();
+```
+
+iterator의 `next()`를 호출하면 다음 `yield` 또는 `return`까지 실행한다.
+
+```text
+iterator.next() → { value: 1, done: false }
+iterator.next() → { value: 2, done: false }
+iterator.next() → { value: 3, done: true }
+```
+
+- `value`: generator가 밖으로 전달한 값
+- `done: false`: 아직 실행할 코드가 남아 있음
+- `done: true`: `return`까지 도달해 실행이 끝남
+
+### `yield`로 값을 주고받기
+
+`yield value`는 `value`를 generator 바깥으로 내보내고 실행을 일시 정지한다. 다음 `next(input)` 호출의 `input`은 멈춰 있던 `yield` 표현식의 결과로 들어온다.
+
+```ts
+function* receive() {
+  const input = yield "값을 주세요";
+  return input;
+}
+```
+
+```text
+iterator.next()
+→ "값을 주세요"를 밖으로 전달하고 정지
+
+iterator.next(10)
+→ yield 표현식의 결과가 10
+→ input에 10이 바인딩되고 실행 재개
+```
+
+### `yield`와 `yield*`
+
+`yield`는 값 하나를 그대로 내보낸다. `yield*`는 다른 iterable 또는 generator에 순회를 위임한다.
+
+```ts
+function* values() {
+  yield* [1, 2, 3];
+}
+```
+
+위 코드는 배열의 값을 차례로 `yield`하는 것과 같다. Effect는 `yield* effect` 문법을 사용할 수 있도록 iterable 규약을 제공하며, `Effect.gen`이 이 문법을 이용해 generator와 Effect runtime을 연결한다.
+
+### Effect에서의 `yield*`와 1회성 iterator
+
+Effect도 `[Symbol.iterator]()`를 구현한 iterable이다. 다만 배열처럼 내부 값을 여러 개 순회하기 위한 iterator가 아니다. Effect는 자기 자신을 한 번 내보내고, runtime이 돌려준 성공 값을 최종 완료 값으로 반환하는 1회성 iterator를 제공한다.
+
+Effect 4에서는 Effect의 iterator를 다음과 같이 만든다.
+
+```ts
+[Symbol.iterator]() {
+  return new SingleShotGen(this);
+}
+```
+
+동작을 단순화하면 다음과 같다.
+
+```ts
+effect[Symbol.iterator] = function () {
+  let first = true;
+
+  return {
+    next(successValue) {
+      if (first) {
+        first = false;
+
+        return {
+          value: effect,
+          done: false,
+        };
+      }
+
+      return {
+        value: successValue,
+        done: true,
+      };
+    },
+  };
+};
+```
+
+`yield* effect`는 이 iterator에 순회를 위임한다. 첫 번째 `next()`는 Effect 객체를 `Effect.gen` 실행기에 내보낸다. runtime이 그 Effect를 실행해 값 `A`로 성공하면 실행기가 `next(A)`로 iterator를 재개한다. 두 번째 호출은 `{ value: A, done: true }`를 반환하므로 `yield* effect` 표현식의 최종 결과가 `A`가 된다.
+
+```text
+yield* effect
+→ effect[Symbol.iterator]()
+→ SingleShotGen.next()
+→ { value: effect, done: false }
+→ runtime이 effect 실행
+→ A로 성공
+→ SingleShotGen.next(A)
+→ { value: A, done: true }
+→ yield* 표현식의 결과 = A
+```
+
+따라서 `Effect<A, E, R>`에 `yield*`를 사용하면 지역 변수에는 Effect 객체가 아니라 성공 타입 `A`가 들어온다.
+
+## `Effect.gen`에서 `yield*`를 사용하는 이유
+
+`Effect.gen`과 `yield*`는 여러 Effect의 순차 합성을 일반적인 동기 코드처럼 표현하기 위한 문법이다. 새로운 실행 기능을 추가하는 것이 아니라, 여러 `flatMap`으로 표현할 수 있는 연결을 지역 변수와 순차적인 문장으로 작성하게 해준다.
+
+```text
+flatMap(first, firstValue =>
+  flatMap(second(firstValue), secondValue => ...)
+)
+
+        ↓ 같은 합성을 순차 문법으로 표현
+
+const firstValue = yield* first
+const secondValue = yield* second(firstValue)
+```
+
+### 실행 흐름
+
+`yield* effect`를 만나면 generator가 잠시 멈추고 Effect를 runtime에 넘긴다. JavaScript가 Effect를 직접 실행하는 것이 아니라 `Effect.gen`의 실행기가 generator와 Effect runtime을 연결한다.
+
+```text
+generator 실행
+→ yield* effect에서 일시 정지
+→ runtime이 effect 실행
+├─ 성공 A → generator를 A와 함께 재개
+└─ 실패 E → generator의 다음 줄을 실행하지 않고 전체 Effect가 실패
+```
+
+성공 값 `A`는 `yield*` 표현식의 결과가 되어 지역 변수에 바인딩된다. generator의 마지막 `return` 값은 합성된 Effect의 최종 성공 값이 된다.
+
+### `async/await`과의 차이
+
+형태는 `async/await`과 비슷하지만 `Effect.gen`의 결과는 Promise가 아니라 `Effect<Success, Error, Requirements>`다. 따라서 실행 지연, 오류 타입, 필요한 서비스, interruption과 자원 관리 같은 Effect의 의미를 유지한다.
+
+```text
+Promise          Effect
+async            Effect.gen
+await            yield*
+```
+
+핵심은 순차적으로 읽히는 코드를 작성하면서도 중간에 `runSync`나 `runPromise`를 호출하지 않고, 실행 제어와 실패 처리를 Effect runtime에 남겨두는 것이다.

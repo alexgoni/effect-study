@@ -112,6 +112,27 @@ Effect.map(source, f)
 
 첫 번째 Effect가 성공해야 두 번째 Effect가 실행됩니다. 전체 프로그램의 성공 값은 두 번째 Effect의 성공 값입니다. 첫 번째 Effect가 실패하면 두 번째 Effect는 실행되지 않습니다.
 
+### `Effect.gen`과 `yield*`로 순차 합성하기
+
+`Effect.gen`은 `map`과 `flatMap`으로 표현할 수 있는 합성을 generator 문법으로 작성하게 합니다. Effect 하나의 성공 값을 일반 값으로 변환하는 경우는 `map`과 동등하고, 여러 `yield*`로 다음 Effect를 이어가는 순차 합성은 `flatMap`과 동등합니다. `yield*`는 Effect를 runtime에 넘기고, 성공하면 성공 값을 지역 변수에 바인딩합니다.
+
+```text
+yield* Effect<A, E, R>
+        ↓ 성공
+지역 변수: A
+```
+
+여러 Effect를 `yield*`하면 앞 단계가 성공한 뒤 다음 단계로 진행합니다. 어느 단계든 실패하면 generator의 나머지 코드는 실행되지 않고, 해당 오류가 전체 Effect로 전달됩니다.
+
+generator의 마지막 `return` 값은 `Effect.gen`이 만든 Effect의 최종 성공 값입니다. 일반 값을 반환하며 `Effect.succeed`로 다시 감싸지 않습니다.
+
+```text
+Effect.gen 내부 return B
+→ Effect<B, 합쳐진 오류, 합쳐진 의존성>
+```
+
+generator 코드는 순차적으로 보이지만 `Effect.gen`을 호출할 때 작업이 실행되는 것은 아닙니다. 완성된 Effect를 runtime에 전달할 때 generator와 각 Effect가 실행됩니다.
+
 ## 실행 원칙
 
 합성 과정에서는 `runSync`나 `runPromise`를 호출하지 않습니다. 각 단계는 새로운 Effect 값을 만들 뿐이며, 완성된 `program`만 애플리케이션 경계에서 실행합니다.
@@ -136,7 +157,7 @@ Effect.map(source, f)
 | 완료      | `02-flat-map.ts`           | `flatMap`으로 성공 값에 의존하는 다음 Effect를 연결한다.      |
 | 완료      | `03-pipe.ts`               | `pipe`와 data-last 형태로 합성 과정을 위에서 아래로 표현한다. |
 | 완료      | `04-and-then.ts`           | 앞 Effect 다음에 다른 Effect를 실행하고 결과를 이어받는다.    |
-| 진행 예정 | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.  |
+| 완료      | `05-gen.ts`                | `Effect.gen`과 `yield*`로 여러 Effect를 순차적으로 합성한다.  |
 | 진행 예정 | `06-short-circuit.ts`      | 앞 단계가 실패하면 뒤 단계가 실행되지 않는 것을 확인한다.     |
 | 진행 예정 | `07-composition-styles.ts` | 같은 프로그램을 `flatMap`과 `gen`으로 작성해 구조를 비교한다. |
 
