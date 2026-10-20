@@ -19,8 +19,8 @@
 | 4    | `04-catch-tag.ts`         | `_tag`를 기준으로 필요한 오류만 복구   | 완료    |
 | 5    | `05-map-error.ts`         | 오류 값을 다른 오류 타입으로 변환      | 완료    |
 | 6    | `06-fallback.ts`          | 실패했을 때 대체 성공 값 사용          | 완료    |
-| 7    | `07-defect-and-cause.ts`  | 예상된 오류, defect, `Cause`의 차이    | 진행 중 |
-| 8    | `08-retry-and-timeout.ts` | 재시도와 제한 시간 정책 적용           | 예정    |
+| 7    | `07-defect-and-cause.ts`  | 예상된 오류, defect, `Cause`의 차이    | 완료    |
+| 8    | `08-retry-and-timeout.ts` | 재시도와 제한 시간 정책 적용           | 진행 중 |
 
 ## 핵심 구분
 
@@ -104,6 +104,17 @@ Effect<number, StorageError, never>
 ```
 
 단순한 기본값이면 `orElseSucceed`, 복구 과정에서 다른 Effect 작업이 필요하면 `catch`를 사용합니다.
+
+## 07. 예상된 오류와 defect
+
+`Effect.fail`은 오류 채널 `E`에 나타나는 예상된 오류를 만들고, `Effect.die`는 오류 채널 밖의 defect를 만듭니다.
+
+```text
+Effect.fail → Cause의 Fail → catch로 복구 가능
+Effect.die  → Cause의 Die  → catch로 복구되지 않음
+```
+
+따라서 오류 타입이 `never`라는 것은 typed error가 없다는 뜻이며 defect나 interruption까지 절대 발생하지 않는다는 뜻은 아닙니다.
 
 ## 완료 조건
 
