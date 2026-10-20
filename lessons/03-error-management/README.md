@@ -18,8 +18,8 @@
 | 3    | `03-catch.ts`             | 오류 채널 전체를 복구                  | 완료    |
 | 4    | `04-catch-tag.ts`         | `_tag`를 기준으로 필요한 오류만 복구   | 완료    |
 | 5    | `05-map-error.ts`         | 오류 값을 다른 오류 타입으로 변환      | 완료    |
-| 6    | `06-fallback.ts`          | 실패했을 때 대체 성공 값 사용          | 진행 중 |
-| 7    | `07-defect-and-cause.ts`  | 예상된 오류, defect, `Cause`의 차이    | 예정    |
+| 6    | `06-fallback.ts`          | 실패했을 때 대체 성공 값 사용          | 완료    |
+| 7    | `07-defect-and-cause.ts`  | 예상된 오류, defect, `Cause`의 차이    | 진행 중 |
 | 8    | `08-retry-and-timeout.ts` | 재시도와 제한 시간 정책 적용           | 예정    |
 
 ## 핵심 구분
@@ -92,6 +92,18 @@ Effect<number, StorageError, never>
 ```
 
 `catch`의 콜백은 새로운 Effect를 반환하지만 `mapError`의 콜백은 변환된 오류 값 자체를 반환합니다.
+
+## 06. `Effect.orElseSucceed`
+
+`Effect.orElseSucceed`는 typed error가 발생했을 때 일반 값을 대체 성공 값으로 사용합니다. 복구 Effect가 아니라 값 자체를 반환하므로 오류 채널은 `never`가 됩니다.
+
+```text
+Effect<number, StorageError, never>
+→ 실패 시 기본 재고 0 사용
+→ Effect<number, never, never>
+```
+
+단순한 기본값이면 `orElseSucceed`, 복구 과정에서 다른 Effect 작업이 필요하면 `catch`를 사용합니다.
 
 ## 완료 조건
 

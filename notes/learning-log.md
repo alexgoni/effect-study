@@ -510,3 +510,21 @@ Failure          → Exit의 실행 결과
 Fail             → Cause 안의 원인 종류
 InvalidQuantity  → 실제 도메인 오류 종류
 ```
+
+## `catch`와 `orElseSucceed`의 차이
+
+두 연산 모두 typed error가 발생했을 때 복구하지만 콜백의 반환 타입이 다르다.
+
+```text
+Effect.catch           E → Effect<B, E2, R2>
+Effect.orElseSucceed   E → B
+```
+
+`catch`는 복구 과정 자체를 Effect로 만들기 때문에 다른 작업을 실행하거나, 다시 실패하거나, 추가 서비스를 요구할 수 있다. `orElseSucceed`는 오류로부터 평범한 대체 성공 값만 계산하며 반환된 Effect의 오류 채널은 `never`가 된다.
+
+```text
+catch(error => Effect.succeed(fallback))
+≒ orElseSucceed(error => fallback)
+```
+
+따라서 단순한 기본값이면 `orElseSucceed`, 복구 과정에 Effect 작업이 필요하면 `catch`를 사용한다. 둘 다 기본적으로 defect와 interruption은 복구하지 않는다.
