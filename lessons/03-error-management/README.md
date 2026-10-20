@@ -15,8 +15,8 @@
 | --- | --- | --- | --- |
 | 1 | `01-tagged-error.ts` | `_tag`와 정보를 가진 도메인 오류 정의 | 완료 |
 | 2 | `02-error-union.ts` | Effect 합성으로 만들어지는 오류 유니온 | 완료 |
-| 3 | `03-catch.ts` | 오류 채널 전체를 복구 | 진행 중 |
-| 4 | `04-catch-tag.ts` | `_tag`를 기준으로 필요한 오류만 복구 | 예정 |
+| 3 | `03-catch.ts` | 오류 채널 전체를 복구 | 완료 |
+| 4 | `04-catch-tag.ts` | `_tag`를 기준으로 필요한 오류만 복구 | 진행 중 |
 | 5 | `05-map-error.ts` | 오류 값을 다른 오류 타입으로 변환 | 예정 |
 | 6 | `06-fallback.ts` | 실패했을 때 대체 성공 값 사용 | 예정 |
 | 7 | `07-defect-and-cause.ts` | 예상된 오류, defect, `Cause`의 차이 | 예정 |
@@ -58,6 +58,18 @@ Effect<number, InvalidQuantity | InsufficientStock, never>
 ```
 
 오류 유니온은 모든 오류가 한 번에 발생한다는 뜻이 아니라, 실행 경로에 따라 그중 하나로 실패할 수 있다는 뜻입니다. 앞 단계가 실패하면 뒤 단계는 실행되지 않지만, 실행 전 프로그램의 타입에는 두 실패 가능성이 모두 남습니다.
+
+## 03. `Effect.catch`
+
+`Effect.catch`는 오류 채널의 모든 예상된 오류를 받아 새로운 Effect로 복구합니다. 복구 Effect가 실패하지 않으면 기존 오류 타입은 처리되어 최종 오류 채널에서 사라집니다.
+
+```text
+Effect<number, InvalidQuantity, never>
+→ InvalidQuantity를 기본 수량 1로 복구
+→ Effect<number, never, never>
+```
+
+`catch`는 `Effect.fail`로 표현된 typed error를 처리하며 defect까지 자동으로 복구하지는 않습니다.
 
 ## 완료 조건
 
