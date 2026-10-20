@@ -20,7 +20,7 @@
 | 5    | `05-map-error.ts`         | 오류 값을 다른 오류 타입으로 변환      | 완료    |
 | 6    | `06-fallback.ts`          | 실패했을 때 대체 성공 값 사용          | 완료    |
 | 7    | `07-defect-and-cause.ts`  | 예상된 오류, defect, `Cause`의 차이    | 완료    |
-| 8    | `08-retry-and-timeout.ts` | 재시도와 제한 시간 정책 적용           | 진행 중 |
+| 8    | `08-retry-and-timeout.ts` | 재시도와 제한 시간 정책 적용           | 완료    |
 
 ## 핵심 구분
 
@@ -116,12 +116,34 @@ Effect.die  → Cause의 Die  → catch로 복구되지 않음
 
 따라서 오류 타입이 `never`라는 것은 typed error가 없다는 뜻이며 defect나 interruption까지 절대 발생하지 않는다는 뜻은 아닙니다.
 
+## 08-A. `Effect.retry`
+
+`Effect.retry`는 typed error로 실패한 source Effect를 정책에 따라 다시 실행합니다. `{ times: 2 }`는 최초 실행을 제외한 재시도 횟수이므로 최대 실행 횟수는 3회입니다.
+
+```text
+최초 실행 1회 + 재시도 2회 = 최대 3회 실행
+```
+
+재시도할 때 반복되어야 하는 작업은 `Effect.sync`처럼 실행 시점까지 지연된 Effect 안에 있어야 합니다. `retry`가 반환하는 새 Effect를 저장하고 실행해야 정책이 적용됩니다.
+
+## 08-B. `Effect.timeout`
+
+`Effect.timeout`은 source가 제한 시간 안에 완료되지 않으면 source를 중단하고 typed `TimeoutError`로 실패합니다.
+
+```text
+Effect<string, never, never>
+→ 10ms timeout 적용
+→ Effect<string, TimeoutError, never>
+```
+
+`Effect.sleep`도 실행할 프로그램 값이므로 `Effect.gen` 안에서 `yield*`로 합성해야 합니다. `runPromiseExit`은 Promise를 반환하므로 `await`한 뒤에야 실제 `Exit`을 확인할 수 있습니다.
+
 ## 완료 조건
 
-- [ ] 오류 타입만 보고 발생 가능한 실패를 파악할 수 있다.
-- [ ] `_tag`를 이용해 오류를 구분할 수 있다.
-- [ ] 모든 오류를 복구하는 것과 특정 오류만 복구하는 것의 차이를 설명할 수 있다.
-- [ ] 예상된 오류와 defect를 구분할 수 있다.
+- [x] 오류 타입만 보고 발생 가능한 실패를 파악할 수 있다.
+- [x] `_tag`를 이용해 오류를 구분할 수 있다.
+- [x] 모든 오류를 복구하는 것과 특정 오류만 복구하는 것의 차이를 설명할 수 있다.
+- [x] 예상된 오류와 defect를 구분할 수 있다.
 
 ## 참고
 
