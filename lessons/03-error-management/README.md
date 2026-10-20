@@ -17,8 +17,8 @@
 | 2    | `02-error-union.ts`       | Effect 합성으로 만들어지는 오류 유니온 | 완료    |
 | 3    | `03-catch.ts`             | 오류 채널 전체를 복구                  | 완료    |
 | 4    | `04-catch-tag.ts`         | `_tag`를 기준으로 필요한 오류만 복구   | 완료    |
-| 5    | `05-map-error.ts`         | 오류 값을 다른 오류 타입으로 변환      | 진행 중 |
-| 6    | `06-fallback.ts`          | 실패했을 때 대체 성공 값 사용          | 예정    |
+| 5    | `05-map-error.ts`         | 오류 값을 다른 오류 타입으로 변환      | 완료    |
+| 6    | `06-fallback.ts`          | 실패했을 때 대체 성공 값 사용          | 진행 중 |
 | 7    | `07-defect-and-cause.ts`  | 예상된 오류, defect, `Cause`의 차이    | 예정    |
 | 8    | `08-retry-and-timeout.ts` | 재시도와 제한 시간 정책 적용           | 예정    |
 
@@ -80,6 +80,18 @@ InvalidQuantity | InsufficientStock
 → InvalidQuantity만 복구
 → InsufficientStock
 ```
+
+## 05. `Effect.mapError`
+
+`Effect.mapError`는 성공 채널은 그대로 두고 오류 채널의 값을 다른 오류 타입으로 변환합니다. 오류를 성공으로 복구하는 것이 아니라 계층에 맞는 오류로 번역할 때 사용합니다.
+
+```text
+Effect<number, StorageError, never>
+→ StorageError를 InventoryUnavailable로 변환
+→ Effect<number, InventoryUnavailable, never>
+```
+
+`catch`의 콜백은 새로운 Effect를 반환하지만 `mapError`의 콜백은 변환된 오류 값 자체를 반환합니다.
 
 ## 완료 조건
 
