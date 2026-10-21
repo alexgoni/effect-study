@@ -17,8 +17,8 @@
 | 2 | `02-struct-schema.ts` | 객체 필드 구조 검증 | 완료 |
 | 3 | `03-decoding-results.ts` | Effect, Result, Option 디코더 비교 | 완료 |
 | 4 | `04-refinement.ts` | 값에 추가 조건 적용 | 완료 |
-| 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 진행 중 |
-| 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 예정 |
+| 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 완료 |
+| 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 진행 중 |
 | 7 | `07-external-to-domain.ts` | 외부 데이터 검증과 도메인 로직 합성 | 예정 |
 
 ## 핵심 구분
@@ -79,6 +79,29 @@ Schema.Number
 ```
 
 Refinement는 값을 변환하지 않으므로 `PositiveQuantitySchema.Type`은 여전히 `number`입니다. 명목적으로 구분되는 도메인 타입은 branded type에서 다룹니다.
+
+## 05-A. Decode transformation
+
+`Schema.FiniteFromString`은 외부 문자열 표현을 내부의 유한한 숫자로 검증하고 변환합니다.
+
+```text
+Encoded: string
+→ decode
+Type: number
+```
+
+`NumberFromString`은 JavaScript 숫자 강제 변환처럼 `NaN`과 `Infinity`도 허용하지만, `FiniteFromString`은 이 값들을 `SchemaError`로 거부합니다.
+
+## 05-B. Encode transformation
+
+같은 Schema는 내부 `Type`을 외부 `Encoded` 표현으로 되돌리는 encode 방향도 제공합니다.
+
+```text
+decode: string → number
+encode: number → string
+```
+
+`Schema.encodeResult`에는 내부 타입인 `number`를 전달해야 하므로 문자열 `"42"`는 컴파일 단계에서 거부됩니다. 내부 값도 encode 전에 Schema 조건으로 검사되므로 `NaN`은 `SchemaError`가 됩니다.
 
 ## 완료 조건
 

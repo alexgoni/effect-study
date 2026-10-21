@@ -595,3 +595,18 @@ decodeUnknownOption(schema)(input)
 따라서 Result의 `Failure`는 TypeScript가 컴파일 시점에 결과를 추측한 것이 아니라 JavaScript 런타임에서 decoder 함수가 실제 입력을 검사해 만든 값이다.
 
 Option은 `Some<A> | None`으로 성공 값의 존재 여부만 표현한다. `Some(value)`는 검증된 값이 있다는 뜻이고 `None`은 검증된 값이 없다는 뜻이다. Schema 검증에서 `None`은 입력이 Schema를 통과하지 못했다는 사실만 남기며, 실패 이유는 의도적으로 버린다.
+
+## `NumberFromString`과 `FiniteFromString`
+
+`Schema.NumberFromString`은 JavaScript의 숫자 강제 변환을 사용한다. 따라서 숫자로 해석할 수 없는 문자열도 `NaN`이라는 `number` 값으로 변환되어 decoding에 성공할 수 있다. `Infinity`와 `-Infinity`도 허용한다.
+
+```text
+"42"       → 42
+"hello"    → NaN
+""         → 0
+"Infinity" → Infinity
+```
+
+`NaN`과 `Infinity`를 거부하려면 `Schema.FiniteFromString`을 사용한다.
+
+또한 `JSON.stringify`는 `NaN`, `Infinity`, `-Infinity`를 JSON에 표현할 수 없어서 `null`로 직렬화한다. 따라서 출력의 `value: null`이 실제 decoding 값이 `null`이라는 뜻은 아닐 수 있다.
