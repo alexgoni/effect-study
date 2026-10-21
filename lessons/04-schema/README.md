@@ -18,8 +18,8 @@
 | 3 | `03-decoding-results.ts` | Effect, Result, Option 디코더 비교 | 완료 |
 | 4 | `04-refinement.ts` | 값에 추가 조건 적용 | 완료 |
 | 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 완료 |
-| 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 진행 중 |
-| 7 | `07-external-to-domain.ts` | 외부 데이터 검증과 도메인 로직 합성 | 예정 |
+| 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 완료 |
+| 7 | `07-external-to-domain.ts` | 외부 데이터 검증과 도메인 로직 합성 | 진행 중 |
 
 ## 핵심 구분
 
@@ -102,6 +102,18 @@ encode: number → string
 ```
 
 `Schema.encodeResult`에는 내부 타입인 `number`를 전달해야 하므로 문자열 `"42"`는 컴파일 단계에서 거부됩니다. 내부 값도 encode 전에 Schema 조건으로 검사되므로 `NaN`은 `SchemaError`가 됩니다.
+
+## 06. Branded type
+
+`check`는 런타임 조건을 보장하고 `brand`는 검증된 값을 일반 primitive와 TypeScript 타입 수준에서 구분합니다.
+
+```text
+unknown number
+→ 양수 조건 검증
+→ number & Brand<"PositiveQuantity">
+```
+
+brand는 런타임 검사를 추가하지 않으므로 조건을 가진 Schema에 적용합니다. Result가 성공한 뒤에는 `Result.Success`의 실제 성공값 프로퍼티인 `success`에서 branded 값을 꺼냅니다.
 
 ## 완료 조건
 
