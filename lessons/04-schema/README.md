@@ -16,8 +16,8 @@
 | 1 | `01-primitive-schema.ts` | primitive Schema로 `unknown` 검증 | 완료 |
 | 2 | `02-struct-schema.ts` | 객체 필드 구조 검증 | 완료 |
 | 3 | `03-decoding-results.ts` | Effect, Result, Option 디코더 비교 | 완료 |
-| 4 | `04-refinement.ts` | 값에 추가 조건 적용 | 진행 중 |
-| 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 예정 |
+| 4 | `04-refinement.ts` | 값에 추가 조건 적용 | 완료 |
+| 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 진행 중 |
 | 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 예정 |
 | 7 | `07-external-to-domain.ts` | 외부 데이터 검증과 도메인 로직 합성 | 예정 |
 
@@ -66,6 +66,19 @@ decodeUnknownOption → Option<A>
 ```
 
 Effect는 다른 Effect 작업과 합성할 때, Result는 성공 또는 자세한 실패를 즉시 값으로 다룰 때, Option은 실패 이유 없이 성공 여부만 필요할 때 사용합니다. Result와 Option은 이미 계산된 값이므로 Effect runner로 실행하지 않습니다.
+
+## 04. Refinement
+
+기본 Schema의 `.check(...)`에 조건을 추가하면 타입 검사 이후 도메인 제약을 검증할 수 있습니다.
+
+```text
+Schema.Number
+→ number인지 검사
+→ isGreaterThan(0) 검사
+→ 양수만 성공
+```
+
+Refinement는 값을 변환하지 않으므로 `PositiveQuantitySchema.Type`은 여전히 `number`입니다. 명목적으로 구분되는 도메인 타입은 branded type에서 다룹니다.
 
 ## 완료 조건
 
