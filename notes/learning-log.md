@@ -545,3 +545,31 @@ Encoded 데이터 ⇄ Schema ⇄ Domain 타입
 ```
 
 이미 Effect를 프로그램의 중심으로 사용한다면 오류 처리와 합성이 자연스러운 Effect Schema가 잘 맞는다. 기존 프로젝트가 Zod나 Valibot 중심이면 반드시 교체해야 하는 것은 아니다.
+
+## Schema 값에서 TypeScript 타입을 얻는 원리
+
+Effect의 Schema 객체는 런타임 검증에 사용하는 AST와 함께 decoded 타입 `T`를 제네릭 정보로 가진다. `Type`은 이 제네릭을 TypeScript가 꺼낼 수 있도록 Schema 인터페이스에 선언된 type-level 표식이다.
+
+단순화한 구조는 다음과 같다.
+
+```ts
+interface Schema<T> {
+  readonly Type: T;
+}
+```
+
+`Schema.Struct`는 각 필드 Schema의 `Type`을 mapped type으로 모아 객체 타입을 계산한다.
+
+```ts
+type StructType<Fields> = {
+  readonly [Key in keyof Fields]: Fields[Key]["Type"];
+};
+```
+
+따라서 `Schema.Number`의 `Type`은 `number`, `Schema.String`의 `Type`은 `string`이고, 두 필드를 가진 `UserSchema.Type`은 `{ readonly id: number; readonly name: string }`으로 계산된다.
+
+```ts
+type User = typeof UserSchema.Type;
+```
+
+여기서 `typeof`는 타입 위치에서 `UserSchema.Type` 프로퍼티의 정적 타입을 묻는다. `Type`은 실제 데이터를 담는 런타임 프로퍼티가 아니므로 런타임에서 `UserSchema.Type`을 읽으면 `undefined`다. 실제 런타임 검증 정보는 Schema의 AST에 들어 있다.

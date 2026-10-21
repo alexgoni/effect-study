@@ -14,8 +14,8 @@
 | 순서 | 파일 | 내용 | 상태 |
 | --- | --- | --- | --- |
 | 1 | `01-primitive-schema.ts` | primitive Schema로 `unknown` 검증 | 완료 |
-| 2 | `02-struct-schema.ts` | 객체 필드 구조 검증 | 진행 중 |
-| 3 | `03-decoding-results.ts` | Effect, Result, Option 디코더 비교 | 예정 |
+| 2 | `02-struct-schema.ts` | 객체 필드 구조 검증 | 완료 |
+| 3 | `03-decoding-results.ts` | Effect, Result, Option 디코더 비교 | 진행 중 |
 | 4 | `04-refinement.ts` | 값에 추가 조건 적용 | 예정 |
 | 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 예정 |
 | 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 예정 |
@@ -42,6 +42,18 @@ Schema.String + unknown
 ```
 
 타입 단언은 런타임 값을 검사하지 않지만 Schema decoding은 실제 값이 규칙을 만족하는지 실행 시점에 검사합니다.
+
+## 02. `Schema.Struct`
+
+`Schema.Struct`는 객체의 각 필드에 Schema를 지정해 런타임 구조를 검증합니다. 같은 Schema의 `Type`으로 검증을 통과한 값의 TypeScript 타입도 얻을 수 있습니다.
+
+```text
+input: unknown
+→ UserSchema로 검증
+→ { readonly id: number; readonly name: string }
+```
+
+검증 전 입력을 `unknown`으로 유지하면 외부 데이터의 필드에 미리 접근할 수 없고, decoding 성공 이후에만 신뢰 가능한 타입으로 사용할 수 있습니다.
 
 ## 완료 조건
 
