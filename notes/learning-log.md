@@ -528,3 +528,20 @@ catch(error => Effect.succeed(fallback))
 ```
 
 따라서 단순한 기본값이면 `orElseSucceed`, 복구 과정에 Effect 작업이 필요하면 `catch`를 사용한다. 둘 다 기본적으로 defect와 interruption은 복구하지 않는다.
+
+## Effect Schema와 Zod·Valibot의 관계
+
+Effect Schema는 Zod나 Valibot처럼 런타임의 `unknown` 값을 검증하고, 성공한 값의 TypeScript 타입을 얻는 문제를 해결한다. 따라서 외부 입력 검증 용도에서는 대안으로 사용할 수 있다.
+
+다만 단순한 drop-in replacement는 아니다. Effect Schema는 검증뿐 아니라 encoded 값과 decoded 값 사이의 양방향 변환을 모델링하고, 검증 실패를 `SchemaError`가 있는 Effect로 반환해 다른 Effect 프로그램과 합성할 수 있다.
+
+```text
+공통 영역
+unknown → 런타임 검증 → 타입이 있는 값
+
+Effect Schema의 중심 관점
+Encoded 데이터 ⇄ Schema ⇄ Domain 타입
+                    └─ Effect 오류 채널과 합성
+```
+
+이미 Effect를 프로그램의 중심으로 사용한다면 오류 처리와 합성이 자연스러운 Effect Schema가 잘 맞는다. 기존 프로젝트가 Zod나 Valibot 중심이면 반드시 교체해야 하는 것은 아니다.
