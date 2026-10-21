@@ -573,3 +573,25 @@ type User = typeof UserSchema.Type;
 ```
 
 여기서 `typeof`는 타입 위치에서 `UserSchema.Type` 프로퍼티의 정적 타입을 묻는다. `Type`은 실제 데이터를 담는 런타임 프로퍼티가 아니므로 런타임에서 `UserSchema.Type`을 읽으면 `undefined`다. 실제 런타임 검증 정보는 Schema의 AST에 들어 있다.
+
+## Result·Option decoder는 언제 검증하는가
+
+Effect decoder만 실행이 지연된다. Result와 Option decoder는 일반 동기 함수이므로 입력을 전달하는 호출 자체가 검증 실행이다.
+
+```text
+decodeUnknownEffect(schema)(input)
+→ 실행할 Effect를 반환
+→ runner를 호출할 때 검증
+
+decodeUnknownResult(schema)(input)
+→ 호출 즉시 검증
+→ Result 값을 반환
+
+decodeUnknownOption(schema)(input)
+→ 호출 즉시 검증
+→ Option 값을 반환
+```
+
+따라서 Result의 `Failure`는 TypeScript가 컴파일 시점에 결과를 추측한 것이 아니라 JavaScript 런타임에서 decoder 함수가 실제 입력을 검사해 만든 값이다.
+
+Option은 `Some<A> | None`으로 성공 값의 존재 여부만 표현한다. `Some(value)`는 검증된 값이 있다는 뜻이고 `None`은 검증된 값이 없다는 뜻이다. Schema 검증에서 `None`은 입력이 Schema를 통과하지 못했다는 사실만 남기며, 실패 이유는 의도적으로 버린다.
