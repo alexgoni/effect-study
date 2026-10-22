@@ -17,8 +17,8 @@
 | 1 | `01-service-requirement.ts` | 필요한 서비스를 `Requirements` 타입에 남기기 | 완료 |
 | 2 | `02-provide-service.ts` | 서비스 구현을 직접 제공하기 | 완료 |
 | 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 완료 |
-| 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 진행 중 |
-| 5 | `05-effectful-layer.ts` | Effect로 서비스 구현을 생성하는 Layer 만들기 | 예정 |
+| 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 완료 |
+| 5 | `05-effectful-layer.ts` | Effect로 서비스 구현을 생성하는 Layer 만들기 | 진행 중 |
 | 6 | `06-layer-composition.ts` | 여러 Layer의 의존성 조립하기 | 예정 |
 | 7 | `07-layer-memoization.ts` | Layer의 생명주기와 memoization 이해하기 | 예정 |
 
@@ -56,6 +56,19 @@ Effect<string, never, Greeter>
 ```
 
 `Effect.provideService`의 반환값은 서비스 구현체가 아니라 구현이 제공된 새로운 Effect입니다. 변수 이름도 `liveProgram`, `testProgram`처럼 값의 실제 역할을 나타내면 구현 객체와 실행 프로그램을 구분하기 쉽습니다.
+
+## 04. `Layer.succeed`
+
+`Layer.succeed`는 이미 만들어진 서비스 구현 객체를 실패 없이 제공하는 Layer를 만듭니다. `Effect.provide`로 Layer를 프로그램에 연결하면 Layer가 제공하는 서비스가 프로그램의 `Requirements`에서 제거됩니다.
+
+```text
+구현 객체
+→ Layer.succeed로 Greeter Layer 생성
+→ Effect.provide로 program에 연결
+→ Effect<string, never, never>
+```
+
+`Layer.succeed`의 `succeed`는 서비스 메서드가 항상 성공한다는 뜻이 아니라 구현 객체를 Layer로 준비하는 과정 자체의 오류 타입이 `never`라는 뜻입니다. 구현 객체는 `greeterImplementation`처럼 서비스 구현임을 나타내는 이름으로 함수나 실행 프로그램과 구분할 수 있습니다.
 
 ## 완료 조건
 
