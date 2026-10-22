@@ -19,8 +19,8 @@
 | 3    | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기             | 완료    |
 | 4    | `04-layer-succeed.ts`       | 이미 만들어진 구현을 Layer로 제공하기        | 완료    |
 | 5    | `05-effectful-layer.ts`     | Effect로 서비스 구현을 생성하는 Layer 만들기 | 완료    |
-| 6    | `06-layer-composition.ts`   | 여러 Layer의 의존성 조립하기                 | 진행 중 |
-| 7    | `07-layer-memoization.ts`   | Layer의 생명주기와 memoization 이해하기      | 예정    |
+| 6    | `06-layer-composition.ts`   | 여러 Layer의 의존성 조립하기                 | 완료    |
+| 7    | `07-layer-memoization.ts`   | Layer의 생명주기와 memoization 이해하기      | 진행 중 |
 
 ## 01. 서비스 요구사항
 
@@ -81,6 +81,17 @@ Effect<Greeter 구현, GreeterSetupError, never>
 ```
 
 Layer를 프로그램에 제공하면 구현 준비 오류가 최종 프로그램의 오류 채널에 합쳐집니다. 실행할 때는 Layer를 먼저 준비하므로 Layer 생성이 실패하면 서비스가 필요한 프로그램 본문은 실행되지 않습니다.
+
+## 06. `Layer.merge`
+
+프로그램이 여러 서비스를 요구하면 각 서비스 Layer를 `Layer.merge`로 합쳐 한 번에 제공할 수 있습니다. 합친 Layer의 출력 타입은 각 Layer가 제공하는 서비스의 합집합입니다.
+
+```text
+Layer<Greeter> + Layer<Logger>
+→ Layer<Greeter | Logger>
+```
+
+서비스 메서드가 반환하는 Effect도 호출만 하고 버리면 실행되지 않습니다. `Logger.log`가 `Effect<void>`를 반환한다면 `void`는 성공값일 뿐이므로, `yield*`로 프로그램에 합성해야 `Effect.sync` 안의 실제 출력이 실행됩니다.
 
 ## 완료 조건
 
