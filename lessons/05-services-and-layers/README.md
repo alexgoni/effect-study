@@ -16,8 +16,8 @@
 | --- | --- | --- | --- |
 | 1 | `01-service-requirement.ts` | 필요한 서비스를 `Requirements` 타입에 남기기 | 완료 |
 | 2 | `02-provide-service.ts` | 서비스 구현을 직접 제공하기 | 완료 |
-| 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 진행 중 |
-| 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 예정 |
+| 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 완료 |
+| 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 진행 중 |
 | 5 | `05-effectful-layer.ts` | Effect로 서비스 구현을 생성하는 Layer 만들기 | 예정 |
 | 6 | `06-layer-composition.ts` | 여러 Layer의 의존성 조립하기 | 예정 |
 | 7 | `07-layer-memoization.ts` | Layer의 생명주기와 memoization 이해하기 | 예정 |
@@ -44,6 +44,18 @@ Effect<string, never, Greeter>
 ```
 
 두 번째 인자에는 서비스 이름 문자열이 아니라 `Context.Service`로 정의한 서비스 키를 전달합니다. 세 번째 인자인 구현 객체는 서비스 계약과 같은 프로퍼티와 함수 타입을 가져야 합니다.
+
+## 03. 서비스 구현 교체하기
+
+서비스를 사용하는 프로그램은 필요한 능력의 계약에만 의존합니다. 따라서 업무 프로그램을 한 번만 정의하고, 실행 경계에서 실제 구현과 테스트 구현을 각각 제공할 수 있습니다.
+
+```text
+같은 Effect program
+├─ live 구현 제공 → liveProgram
+└─ test 구현 제공 → testProgram
+```
+
+`Effect.provideService`의 반환값은 서비스 구현체가 아니라 구현이 제공된 새로운 Effect입니다. 변수 이름도 `liveProgram`, `testProgram`처럼 값의 실제 역할을 나타내면 구현 객체와 실행 프로그램을 구분하기 쉽습니다.
 
 ## 완료 조건
 
