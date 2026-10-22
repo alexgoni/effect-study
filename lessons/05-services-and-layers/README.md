@@ -15,8 +15,8 @@
 | 순서 | 파일 | 내용 | 상태 |
 | --- | --- | --- | --- |
 | 1 | `01-service-requirement.ts` | 필요한 서비스를 `Requirements` 타입에 남기기 | 완료 |
-| 2 | `02-provide-service.ts` | 서비스 구현을 직접 제공하기 | 진행 중 |
-| 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 예정 |
+| 2 | `02-provide-service.ts` | 서비스 구현을 직접 제공하기 | 완료 |
+| 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 진행 중 |
 | 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 예정 |
 | 5 | `05-effectful-layer.ts` | Effect로 서비스 구현을 생성하는 Layer 만들기 | 예정 |
 | 6 | `06-layer-composition.ts` | 여러 Layer의 의존성 조립하기 | 예정 |
@@ -32,6 +32,18 @@ Effect<string, never, Greeter>
 ```
 
 서비스에서 호출한 함수가 `Effect`를 반환하면 그 값을 그냥 버리지 않고 `yield*`로 현재 프로그램에 합성해야 합니다. 그래야 서비스 작업의 성공값, 오류, 추가 요구사항이 바깥 프로그램의 타입과 실행 흐름에 반영됩니다.
+
+## 02. 서비스 구현 직접 제공하기
+
+`Effect.provideService`는 프로그램의 서비스 요구사항을 계약에 맞는 구현으로 채웁니다. 서비스를 제공하면 해당 서비스가 `Requirements`에서 제거됩니다.
+
+```text
+Effect<string, never, Greeter>
+→ Greeter 구현 제공
+→ Effect<string, never, never>
+```
+
+두 번째 인자에는 서비스 이름 문자열이 아니라 `Context.Service`로 정의한 서비스 키를 전달합니다. 세 번째 인자인 구현 객체는 서비스 계약과 같은 프로퍼티와 함수 타입을 가져야 합니다.
 
 ## 완료 조건
 
