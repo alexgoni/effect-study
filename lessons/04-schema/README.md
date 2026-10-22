@@ -19,7 +19,7 @@
 | 4 | `04-refinement.ts` | 값에 추가 조건 적용 | 완료 |
 | 5 | `05-transformation.ts` | 외부 표현을 내부 타입으로 변환 | 완료 |
 | 6 | `06-branded-type.ts` | 검증된 값을 도메인 타입으로 구분 | 완료 |
-| 7 | `07-external-to-domain.ts` | 외부 데이터 검증과 도메인 로직 합성 | 진행 중 |
+| 7 | `07-external-to-domain.ts` | 외부 데이터 검증과 도메인 로직 합성 | 완료 |
 
 ## 핵심 구분
 
@@ -115,12 +115,27 @@ unknown number
 
 brand는 런타임 검사를 추가하지 않으므로 조건을 가진 Schema에 적용합니다. Result가 성공한 뒤에는 `Result.Success`의 실제 성공값 프로퍼티인 `success`에서 branded 값을 꺼냅니다.
 
+## 07. 외부 데이터에서 도메인 로직까지
+
+외부 입력은 `unknown`으로 유지하고 Schema 경계에서 객체 구조, transformation, refinement, brand를 한 번에 적용한 뒤 도메인 함수에 전달합니다.
+
+```text
+unknown { quantity: "3" }
+→ Struct로 객체 구조 검증
+→ FiniteFromString으로 3 변환
+→ 양수 조건 검증
+→ branded Quantity
+→ 도메인 계산
+```
+
+검증에 실패하면 `SchemaError`가 Effect 오류 채널로 전달되고 `Effect.gen`의 다음 줄인 도메인 계산은 실행되지 않습니다.
+
 ## 완료 조건
 
-- [ ] 타입 선언과 런타임 검증의 차이를 설명할 수 있다.
-- [ ] 객체 Schema에서 타입을 추론할 수 있다.
-- [ ] 검증, 정제, 변환의 차이를 설명할 수 있다.
-- [ ] 외부 표현을 검증된 도메인 값으로 변환할 수 있다.
+- [x] 타입 선언과 런타임 검증의 차이를 설명할 수 있다.
+- [x] 객체 Schema에서 타입을 추론할 수 있다.
+- [x] 검증, 정제, 변환의 차이를 설명할 수 있다.
+- [x] 외부 표현을 검증된 도메인 값으로 변환할 수 있다.
 
 ## 참고
 

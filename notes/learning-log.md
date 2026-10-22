@@ -610,3 +610,14 @@ Option은 `Some<A> | None`으로 성공 값의 존재 여부만 표현한다. `S
 `NaN`과 `Infinity`를 거부하려면 `Schema.FiniteFromString`을 사용한다.
 
 또한 `JSON.stringify`는 `NaN`, `Infinity`, `-Infinity`를 JSON에 표현할 수 없어서 `null`로 직렬화한다. 따라서 출력의 `value: null`이 실제 decoding 값이 `null`이라는 뜻은 아닐 수 있다.
+
+## `Effect.gen` 안의 `yield*`에는 무엇이 들어가는가
+
+JavaScript 문법 자체의 `yield*`는 iterator를 구현한 값이라면 사용할 수 있다. 그러나 `Effect.gen`의 generator는 Effect runtime에 실행 명령을 넘기는 용도이므로, 여기서 `yield*` 하는 값은 `Effect<A, E, R>`여야 한다.
+
+```text
+JavaScript yield* → 일반 iterable에 순회 위임
+Effect.gen yield* → Effect를 runtime에 넘기고 성공값 A를 돌려받음
+```
+
+`Schema.decodeUnknownEffect(schema)(input)`은 `Effect<Decoded, SchemaError, R>`를 반환하므로 `Effect.gen` 안에서 `yield*` 할 수 있다. 반면 `decodeUnknownResult`와 `decodeUnknownOption`의 결과는 Effect가 아니므로 `Effect.gen`에 그대로 넘기지 않는다.
