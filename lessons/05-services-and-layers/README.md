@@ -1,3 +1,47 @@
 # 05. Service와 Layer
 
 프로그램의 의존성을 타입으로 표현하고 구현을 조립합니다.
+
+## 학습 목표
+
+- 프로그램이 필요로 하는 능력을 `Effect`의 `Requirements` 타입에 표현한다.
+- 업무 로직과 서비스 구현을 분리한다.
+- 같은 프로그램에 실제 구현과 테스트 구현을 교체해 제공한다.
+- 여러 서비스 구현을 `Layer`로 조립한다.
+- Layer가 구현 생성과 생명주기를 관리하는 방식을 이해한다.
+
+## 학습 내역
+
+| 순서 | 파일 | 내용 | 상태 |
+| --- | --- | --- | --- |
+| 1 | `01-service-requirement.ts` | 필요한 서비스를 `Requirements` 타입에 남기기 | 완료 |
+| 2 | `02-provide-service.ts` | 서비스 구현을 직접 제공하기 | 진행 중 |
+| 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 예정 |
+| 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 예정 |
+| 5 | `05-effectful-layer.ts` | Effect로 서비스 구현을 생성하는 Layer 만들기 | 예정 |
+| 6 | `06-layer-composition.ts` | 여러 Layer의 의존성 조립하기 | 예정 |
+| 7 | `07-layer-memoization.ts` | Layer의 생명주기와 memoization 이해하기 | 예정 |
+
+## 01. 서비스 요구사항
+
+`Context.Service`는 프로그램이 필요로 하는 능력의 이름과 계약을 정의합니다. 서비스 구현을 아직 제공하지 않아도 `Effect.service`로 그 능력을 사용하는 프로그램을 작성할 수 있습니다.
+
+```text
+Effect<string, never, Greeter>
+                      └─ 실행에 Greeter 서비스가 필요함
+```
+
+서비스에서 호출한 함수가 `Effect`를 반환하면 그 값을 그냥 버리지 않고 `yield*`로 현재 프로그램에 합성해야 합니다. 그래야 서비스 작업의 성공값, 오류, 추가 요구사항이 바깥 프로그램의 타입과 실행 흐름에 반영됩니다.
+
+## 완료 조건
+
+- [ ] 업무 로직이 구체적인 구현체를 직접 가져오지 않는다.
+- [ ] 프로그램에 필요한 서비스가 `Requirements` 타입에 나타난다.
+- [ ] 같은 프로그램에 서로 다른 구현을 제공할 수 있다.
+- [ ] 여러 Layer를 조합해 실행 가능한 프로그램을 만들 수 있다.
+- [ ] Layer가 같은 서비스 구현을 공유하는 조건을 설명할 수 있다.
+
+## 참고
+
+- [Managing Services](https://effect.website/docs/v4/requirements-management/services)
+- [Managing Layers](https://effect.website/docs/v4/requirements-management/layers)

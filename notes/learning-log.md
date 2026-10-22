@@ -621,3 +621,30 @@ Effect.gen yield* → Effect를 runtime에 넘기고 성공값 A를 돌려받음
 ```
 
 `Schema.decodeUnknownEffect(schema)(input)`은 `Effect<Decoded, SchemaError, R>`를 반환하므로 `Effect.gen` 안에서 `yield*` 할 수 있다. 반면 `decodeUnknownResult`와 `decodeUnknownOption`의 결과는 Effect가 아니므로 `Effect.gen`에 그대로 넘기지 않는다.
+
+## 업무 로직과 서비스 구현의 구분
+
+업무 로직은 애플리케이션이 무엇을 해야 하는지를 표현한다. 예를 들어 이름을 받아 인사 문장을 얻거나, 주문 수량을 검증한 뒤 재고를 차감하는 처리 순서가 업무 로직이다.
+
+서비스 구현은 그 작업을 실제로 어떻게 수행할지를 표현한다. 같은 메시지 전송 능력도 콘솔에 출력하거나, 외부 API를 호출하거나, 테스트용 배열에 저장하는 등 여러 구현을 가질 수 있다.
+
+```text
+업무 로직: 메시지를 전송해야 한다
+서비스 계약: send(message) 기능이 필요하다
+서비스 구현: 콘솔 / 외부 API / 테스트 메모리 중 어떻게 전송할지 결정한다
+```
+
+Effect의 Service는 업무 로직에 필요한 능력의 계약을 정의하고, Layer 또는 `provideService`는 그 계약을 만족하는 구현을 실행 경계에서 제공한다. 이 분리 덕분에 업무 로직을 바꾸지 않고 실제 구현과 테스트 구현을 교체할 수 있다.
+
+## Effect의 세 번째 타입 `Requirements`가 해결하는 문제
+
+일반 함수가 외부 모듈의 데이터베이스나 API client를 직접 가져오면 반환 타입만으로는 그 의존성을 알 수 없다. 의존성 제공을 빠뜨려도 컴파일 단계에서 확인하기 어렵고, 테스트에서 구현을 교체하기도 어려워진다.
+
+`Effect<A, E, R>`의 `R`은 프로그램 실행에 필요한 서비스의 집합을 타입에 기록한다.
+
+```text
+Effect<Order, PaymentError, PaymentService | OrderRepository>
+                            └─ 실행 전에 제공해야 하는 능력
+```
+
+프로그램을 합성하면 각 부분의 요구사항도 합쳐지고, 서비스를 제공하면 해당 요구사항이 제거된다. 모든 요구사항을 제공해 `R`이 `never`가 되면 외부에서 더 제공할 서비스가 없는 실행 가능한 프로그램이 된다.
