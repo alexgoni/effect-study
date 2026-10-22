@@ -12,15 +12,15 @@
 
 ## 학습 내역
 
-| 순서 | 파일 | 내용 | 상태 |
-| --- | --- | --- | --- |
-| 1 | `01-service-requirement.ts` | 필요한 서비스를 `Requirements` 타입에 남기기 | 완료 |
-| 2 | `02-provide-service.ts` | 서비스 구현을 직접 제공하기 | 완료 |
-| 3 | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기 | 완료 |
-| 4 | `04-layer-succeed.ts` | 이미 만들어진 구현을 Layer로 제공하기 | 완료 |
-| 5 | `05-effectful-layer.ts` | Effect로 서비스 구현을 생성하는 Layer 만들기 | 진행 중 |
-| 6 | `06-layer-composition.ts` | 여러 Layer의 의존성 조립하기 | 예정 |
-| 7 | `07-layer-memoization.ts` | Layer의 생명주기와 memoization 이해하기 | 예정 |
+| 순서 | 파일                        | 내용                                         | 상태    |
+| ---- | --------------------------- | -------------------------------------------- | ------- |
+| 1    | `01-service-requirement.ts` | 필요한 서비스를 `Requirements` 타입에 남기기 | 완료    |
+| 2    | `02-provide-service.ts`     | 서비스 구현을 직접 제공하기                  | 완료    |
+| 3    | `03-swap-implementation.ts` | 실제 구현과 테스트 구현 교체하기             | 완료    |
+| 4    | `04-layer-succeed.ts`       | 이미 만들어진 구현을 Layer로 제공하기        | 완료    |
+| 5    | `05-effectful-layer.ts`     | Effect로 서비스 구현을 생성하는 Layer 만들기 | 완료    |
+| 6    | `06-layer-composition.ts`   | 여러 Layer의 의존성 조립하기                 | 진행 중 |
+| 7    | `07-layer-memoization.ts`   | Layer의 생명주기와 memoization 이해하기      | 예정    |
 
 ## 01. 서비스 요구사항
 
@@ -69,6 +69,18 @@ Effect<string, never, Greeter>
 ```
 
 `Layer.succeed`의 `succeed`는 서비스 메서드가 항상 성공한다는 뜻이 아니라 구현 객체를 Layer로 준비하는 과정 자체의 오류 타입이 `never`라는 뜻입니다. 구현 객체는 `greeterImplementation`처럼 서비스 구현임을 나타내는 이름으로 함수나 실행 프로그램과 구분할 수 있습니다.
+
+## 05. `Layer.effect`
+
+`Layer.effect`는 Effect를 실행해 서비스 구현을 생성합니다. 설정 검증이나 외부 시스템 연결처럼 구현 준비 과정이 실패할 수 있으면 그 오류가 Layer의 오류 타입에 나타납니다.
+
+```text
+Effect<Greeter 구현, GreeterSetupError, never>
+→ Layer.effect
+→ Layer<Greeter, GreeterSetupError, never>
+```
+
+Layer를 프로그램에 제공하면 구현 준비 오류가 최종 프로그램의 오류 채널에 합쳐집니다. 실행할 때는 Layer를 먼저 준비하므로 Layer 생성이 실패하면 서비스가 필요한 프로그램 본문은 실행되지 않습니다.
 
 ## 완료 조건
 
