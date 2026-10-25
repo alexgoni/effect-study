@@ -694,3 +694,25 @@ Effect 생성·합성
 ```
 
 일반 함수도 호출 전까지 실행되지 않는 값이라는 점에서 비슷하다. Effect는 지연 실행에 성공 타입 `A`, 예상 오류 `E`, 필요한 서비스 `R`과 취소·자원 관리·동시성 같은 실행 규칙을 더한 프로그램 표현이다.
+
+## `acquireUseRelease`와 `try/finally`
+
+`Effect.acquireUseRelease`는 자원을 위한 Effect식 `try/finally`로 이해할 수 있다.
+
+```text
+acquire → try에 들어가기 전 자원 획득
+use     → try 본문
+release → finally
+```
+
+`acquire`가 성공한 뒤에는 `use`가 성공하거나 실패하거나 Fiber interruption으로 중단되어도 `release`가 실행된다. 반대로 `acquire` 자체가 실패하면 정리할 자원이 만들어지지 않았으므로 `release`는 실행되지 않는다.
+
+일반적인 `finally`와 달리 release도 Effect이므로 비동기 작업과 서비스 의존성을 가질 수 있다. 또한 release는 `Exit`을 전달받아 use 단계가 성공, 실패, 중단 중 어떤 결과로 끝났는지 확인할 수 있고, 기본적으로 획득과 해제 작업은 interruption으로부터 보호된다.
+
+```text
+acquire 성공
+→ use 실행
+→ use의 종료 결과를 Exit으로 전달
+→ release 실행
+→ 전체 프로그램 종료
+```
