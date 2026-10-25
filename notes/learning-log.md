@@ -648,3 +648,49 @@ Effect<Order, PaymentError, PaymentService | OrderRepository>
 ```
 
 프로그램을 합성하면 각 부분의 요구사항도 합쳐지고, 서비스를 제공하면 해당 요구사항이 제거된다. 모든 요구사항을 제공해 `R`이 `never`가 되면 외부에서 더 제공할 서비스가 없는 실행 가능한 프로그램이 된다.
+
+## Layer memoization의 범위
+
+Layer 값은 생성된 서비스 구현을 영구 보관하는 singleton이 아니라 서비스 구현을 만드는 실행 계획이다. Layer가 제공된 최종 Effect를 실행할 때 구현을 만들고, 한 번의 Layer 구성 및 실행 범위 안에서는 같은 구현을 재사용한다.
+
+```text
+첫 번째 runSync
+→ Layer 준비 → Counter 생성 → 1, 2 → 종료
+
+두 번째 runSync
+→ Layer 다시 준비 → Counter 생성 → 1, 2 → 종료
+```
+
+따라서 같은 runnable을 다시 실행해도 이전 실행의 mutable 상태가 이어지지 않는다. memoization은 전역 캐시가 아니라 현재 Layer 구성 범위 안에서 중복 생성을 피하는 기능이다.
+
+## 프로그램을 값으로 구성한다는 의미
+
+Effect에서는 작업을 정의하는 시점에 바로 실행하지 않고, 나중에 실행할 작업을 나타내는 `Effect` 값을 만든다.
+
+```ts
+const program = Effect.sync(() => {
+  console.log("Hello");
+});
+```
+
+이때 `console.log`는 실행되지 않는다. `program`은 “실행되면 Hello를 출력한다”는 계획을 표현한다. 이 값은 일반 값처럼 변수에 저장하고, 함수에 전달하고, `map`, `flatMap`, `provide` 등의 연산으로 새로운 프로그램으로 합성할 수 있다.
+
+```text
+Effect.succeed(10)
+→ 10으로 성공하는 실행 계획
+
+Effect.map(program, n => n * 2)
+→ 기존 계획의 성공값을 변환하는 새로운 실행 계획
+```
+
+합성 과정에서도 작업은 실행되지 않는다. `runSync`나 `runPromise` 같은 runner에 최종 Effect를 전달하면 runtime이 계획을 해석하면서 실제 작업을 수행한다.
+
+```text
+Effect 생성·합성
+→ 프로그램을 값으로 구성
+→ runner에 전달
+→ runtime이 해석하고 실행
+→ 성공값 또는 실패 원인 반환
+```
+
+일반 함수도 호출 전까지 실행되지 않는 값이라는 점에서 비슷하다. Effect는 지연 실행에 성공 타입 `A`, 예상 오류 `E`, 필요한 서비스 `R`과 취소·자원 관리·동시성 같은 실행 규칙을 더한 프로그램 표현이다.

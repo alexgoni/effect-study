@@ -20,7 +20,7 @@
 | 4    | `04-layer-succeed.ts`       | 이미 만들어진 구현을 Layer로 제공하기        | 완료    |
 | 5    | `05-effectful-layer.ts`     | Effect로 서비스 구현을 생성하는 Layer 만들기 | 완료    |
 | 6    | `06-layer-composition.ts`   | 여러 Layer의 의존성 조립하기                 | 완료    |
-| 7    | `07-layer-memoization.ts`   | Layer의 생명주기와 memoization 이해하기      | 진행 중 |
+| 7    | `07-layer-memoization.ts`   | Layer의 생명주기와 memoization 이해하기      | 완료    |
 
 ## 01. 서비스 요구사항
 
@@ -93,13 +93,27 @@ Layer<Greeter> + Layer<Logger>
 
 서비스 메서드가 반환하는 Effect도 호출만 하고 버리면 실행되지 않습니다. `Logger.log`가 `Effect<void>`를 반환한다면 `void`는 성공값일 뿐이므로, `yield*`로 프로그램에 합성해야 `Effect.sync` 안의 실제 출력이 실행됩니다.
 
+## 07. Layer 생명주기와 memoization
+
+Layer는 서비스 구현 자체가 아니라 구현을 생성하는 실행 계획입니다. `Effect.provide`가 포함된 최종 프로그램을 실행하면 Layer가 구현을 만들고, 그 실행 범위 안에서 같은 구현을 서비스 조회에 재사용합니다.
+
+```text
+한 번의 실행
+→ Counter 구현 생성: current = 0
+→ next(): 1
+→ next(): 2
+→ 실행 종료
+```
+
+같은 `runnable`을 다시 실행하면 새 Layer 제공 범위가 시작되므로 구현도 다시 생성됩니다. 따라서 두 번째 실행에서도 `current`는 0부터 시작합니다. Layer의 memoization은 전역 singleton이 아니라 한 번의 Layer 구성 및 실행 범위 안에서 적용됩니다.
+
 ## 완료 조건
 
-- [ ] 업무 로직이 구체적인 구현체를 직접 가져오지 않는다.
-- [ ] 프로그램에 필요한 서비스가 `Requirements` 타입에 나타난다.
-- [ ] 같은 프로그램에 서로 다른 구현을 제공할 수 있다.
-- [ ] 여러 Layer를 조합해 실행 가능한 프로그램을 만들 수 있다.
-- [ ] Layer가 같은 서비스 구현을 공유하는 조건을 설명할 수 있다.
+- [x] 업무 로직이 구체적인 구현체를 직접 가져오지 않는다.
+- [x] 프로그램에 필요한 서비스가 `Requirements` 타입에 나타난다.
+- [x] 같은 프로그램에 서로 다른 구현을 제공할 수 있다.
+- [x] 여러 Layer를 조합해 실행 가능한 프로그램을 만들 수 있다.
+- [x] Layer가 같은 서비스 구현을 공유하는 조건을 설명할 수 있다.
 
 ## 참고
 
