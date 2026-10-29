@@ -16,7 +16,7 @@
 | ---- | ---------------------------- | ------------------------------------------ | ------- |
 | 1    | `01-acquire-use-release.ts`  | 자원 획득·사용·해제를 하나의 Effect로 묶기 | 완료    |
 | 2    | `02-scoped-resource.ts`      | Scope에 자원 생명주기 연결하기             | 완료    |
-| 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 진행 중 |
+| 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 완료    |
 | 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 예정    |
 | 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 예정    |
 | 6    | `06-concurrency-limit.ts`    | 동시에 실행할 작업 수 제한하기             | 예정    |
@@ -47,6 +47,16 @@ Effect<Connection, never, Scope>
 
 `Effect.scoped`는 finalizer 실행까지 마친 다음 내부 프로그램의 성공값을 반환합니다. 따라서 바깥 runner가 결과를 반환하기 전에 자원 해제가 완료됩니다.
 
+## 03. `forkChild`와 `Fiber.join`
+
+`Effect.forkChild`는 Effect를 부모와 별개의 자식 Fiber로 등록하고 Fiber handle을 즉시 반환합니다. 기본 설정에서는 현재 부모 Fiber가 실행권을 유지하며, 부모가 비동기 대기나 `Fiber.join`에서 중단되면 scheduler가 자식 Fiber를 진행할 수 있습니다.
+
+```text
+forkChild → 자식 Fiber 생성 및 스케줄링
+Fiber.join → 자식 완료를 기다리고 성공값 받기
+```
+
+부모가 50ms 대기하고 자식이 100ms 대기하는 작업을 fork하면 두 대기 시간이 겹쳐 전체 실행 시간은 합계인 약 150ms가 아니라 약 100ms가 됩니다. Fiber 동시성은 JavaScript 코드를 여러 CPU core에서 동시에 실행한다는 뜻이 아니라, 한 Fiber가 비동기 대기 중일 때 다른 Fiber를 진행시키는 구조입니다.
 
 ## 완료 조건
 
