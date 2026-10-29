@@ -15,8 +15,8 @@
 | 순서 | 파일                         | 내용                                       | 상태    |
 | ---- | ---------------------------- | ------------------------------------------ | ------- |
 | 1    | `01-acquire-use-release.ts`  | 자원 획득·사용·해제를 하나의 Effect로 묶기 | 완료    |
-| 2    | `02-scoped-resource.ts`      | Scope에 자원 생명주기 연결하기             | 진행 중 |
-| 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 예정    |
+| 2    | `02-scoped-resource.ts`      | Scope에 자원 생명주기 연결하기             | 완료    |
+| 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 진행 중 |
 | 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 예정    |
 | 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 예정    |
 | 6    | `06-concurrency-limit.ts`    | 동시에 실행할 작업 수 제한하기             | 예정    |
@@ -34,6 +34,19 @@ acquire 성공
 → release 실행
 → use의 성공값 또는 실패를 최종 결과로 전달
 ```
+
+## 02. `acquireRelease`와 `Scope`
+
+`Effect.acquireRelease`는 자원을 획득하고 해제 finalizer를 현재 Scope에 등록합니다. 반환된 자원 Effect의 Requirements에는 `Scope`가 남으며, `Effect.scoped`가 Scope를 제공하고 내부 프로그램 종료 시 등록된 finalizer를 실행합니다.
+
+```text
+Effect<Connection, never, Scope>
+→ Effect.scoped
+→ Effect<string, never, never>
+```
+
+`Effect.scoped`는 finalizer 실행까지 마친 다음 내부 프로그램의 성공값을 반환합니다. 따라서 바깥 runner가 결과를 반환하기 전에 자원 해제가 완료됩니다.
+
 
 ## 완료 조건
 
