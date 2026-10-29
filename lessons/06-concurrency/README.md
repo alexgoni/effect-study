@@ -17,7 +17,7 @@
 | 1    | `01-acquire-use-release.ts`  | 자원 획득·사용·해제를 하나의 Effect로 묶기 | 완료    |
 | 2    | `02-scoped-resource.ts`      | Scope에 자원 생명주기 연결하기             | 완료    |
 | 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 완료    |
-| 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 예정    |
+| 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 완료    |
 | 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 예정    |
 | 6    | `06-concurrency-limit.ts`    | 동시에 실행할 작업 수 제한하기             | 예정    |
 | 7    | `07-race.ts`                 | 여러 작업을 경쟁시키고 승자 선택하기       | 예정    |
@@ -57,6 +57,21 @@ Fiber.join → 자식 완료를 기다리고 성공값 받기
 ```
 
 부모가 50ms 대기하고 자식이 100ms 대기하는 작업을 fork하면 두 대기 시간이 겹쳐 전체 실행 시간은 합계인 약 150ms가 아니라 약 100ms가 됩니다. Fiber 동시성은 JavaScript 코드를 여러 CPU core에서 동시에 실행한다는 뜻이 아니라, 한 Fiber가 비동기 대기 중일 때 다른 Fiber를 진행시키는 구조입니다.
+
+## 04. Fiber interruption과 cleanup
+
+`Fiber.interrupt`는 자식 Fiber에 중단을 요청하고, 자식에 등록된 finalizer가 모두 끝날 때까지 기다립니다. 따라서 interruption 시에는 use의 남은 작업은 건너뛰지만 `acquireUseRelease`의 release는 실행됩니다.
+
+```text
+자원 획득
+→ 작업 시작
+→ 중단 요청
+→ 자원 해제
+→ 중단 완료
+```
+
+`Fiber.interrupt` 다음 작업이 release 이후에 실행되는 순서로 cleanup 완료까지 기다린다는 사실을 확인할 수 있습니다. interruption은 예상 오류 타입 `E`가 아니라 Fiber의 종료 Cause로 관리됩니다.
+
 
 ## 완료 조건
 

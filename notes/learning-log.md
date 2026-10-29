@@ -716,3 +716,27 @@ acquire 성공
 → release 실행
 → 전체 프로그램 종료
 ```
+
+## 직접 부수 효과와 `Effect.sync`의 실행 주체
+
+직접 작성한 `console.log`와 `Effect.sync` 안의 `console.log` 모두 실제로 실행하는 것은 JavaScript runtime이다. Effect runtime은 JavaScript runtime을 대체하지 않고 그 위에서 Effect 명령, Fiber, 중단과 자원 정리를 관리하는 라이브러리다.
+
+`Effect.gen` 안에서 직접 `console.log`를 호출하면 Effect runtime이 generator를 진행시키는 동안 JavaScript가 일반 코드로 실행한다.
+
+```text
+Effect runtime
+→ generator.next()
+→ JavaScript가 generator 본문 실행
+→ console.log 직접 실행
+```
+
+`Effect.sync`로 감싸면 generator는 부수 효과를 직접 실행하지 않고 Sync Effect를 runtime에 넘긴다. Effect runtime은 이 명령을 해석해 callback을 호출하고, callback 내부의 `console.log`는 JavaScript runtime이 실행한다.
+
+```text
+Effect runtime
+→ Sync Effect 해석
+→ callback 호출
+→ JavaScript runtime이 console.log 실행
+```
+
+따라서 차이는 실제 엔진이 아니라 작업의 표현과 제어 경계에 있다. 직접 호출은 generator 내부의 일반 부수 효과이고, `Effect.sync`는 저장하고 합성할 수 있는 `Effect<void>`로 부수 효과를 명시한다. 단, `Effect.sync` 자체가 다른 Fiber로 실행권을 넘기는 비동기 경계는 아니다.
