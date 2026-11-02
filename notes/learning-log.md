@@ -740,3 +740,19 @@ Effect runtime
 ```
 
 따라서 차이는 실제 엔진이 아니라 작업의 표현과 제어 경계에 있다. 직접 호출은 generator 내부의 일반 부수 효과이고, `Effect.sync`는 저장하고 합성할 수 있는 `Effect<void>`로 부수 효과를 명시한다. 단, `Effect.sync` 자체가 다른 Fiber로 실행권을 넘기는 비동기 경계는 아니다.
+
+## Fiber의 협력적 스케줄링
+
+`Effect.forkChild`는 자식 Fiber를 만들고 실행 가능한 상태로 등록하지만, 현재 부모 Fiber의 실행권을 무조건 즉시 빼앗지는 않는다. 부모가 계속 진행할 수 있으면 부모 작업이 이어지고, `sleep`, `Deferred.await`, `Fiber.join`, 비동기 I/O처럼 현재 진행할 수 없는 지점에 도달하면 runtime scheduler가 다른 실행 가능한 Fiber를 진행한다.
+
+```text
+부모가 child를 fork
+→ 부모가 sleep에서 대기
+→ scheduler가 자식 Fiber 실행
+→ 자식이 Deferred.await에서 대기
+→ 부모 timer 완료
+→ 부모가 Deferred를 완료
+→ 자식 Fiber 재개
+```
+
+이 방식은 Fiber가 대기 지점에서 실행권을 양보하는 협력적 스케줄링이다. JavaScript thread가 쉬는 비동기 대기 시간에 다른 Fiber를 진행할 수 있지만, 긴 반복문처럼 동기 코드가 thread를 계속 점유하면 다른 Fiber도 진행하지 못한다.

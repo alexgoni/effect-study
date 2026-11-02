@@ -20,8 +20,8 @@
 | 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 완료    |
 | 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 완료    |
 | 6    | `06-race.ts`                 | 여러 작업을 경쟁시키고 승자 선택하기       | 완료    |
-| 7    | `07-deferred-and-queue.ts`   | Fiber 사이에 신호와 값을 전달하기          | 진행 중 |
-| 8    | `08-semaphore.ts`            | 공유 자원 접근 개수 제한하기               | 예정    |
+| 7    | `07-deferred-and-queue.ts`   | Fiber 사이에 신호와 값을 전달하기          | 완료    |
+| 8    | `08-semaphore.ts`            | 공유 자원 접근 개수 제한하기               | 진행 중 |
 
 ## 01. `acquireUseRelease`
 
@@ -93,6 +93,18 @@ fast 성공
 ```
 
 먼저 실패한 작업은 승자가 아니므로 다른 작업의 성공을 계속 기다립니다. 성공과 실패를 구분하지 않고 먼저 완료된 결과를 선택하려면 `raceFirst`가 필요합니다.
+
+## 07. `Deferred`와 `Queue`
+
+`Deferred`는 한 번만 완료되는 값을 여러 Fiber가 기다릴 수 있게 합니다. `Deferred.await`은 값이 없으면 현재 Fiber만 중단하고, 다른 Fiber가 `Deferred.succeed`로 완료하면 기다리던 Fiber가 재개됩니다.
+
+`Queue`는 여러 값을 FIFO 순서로 전달합니다. `Queue.offer`는 값을 넣는 Effect이고 `Queue.take`는 값을 하나 제거하며 받는 Effect입니다. 두 API의 반환값도 Effect이므로 `yield*`로 실행 흐름에 합성해야 합니다.
+
+```text
+Deferred → 한 번의 완료 신호 또는 결과 공유
+Queue    → 여러 값을 순서대로 생산·소비
+```
+
 
 
 
