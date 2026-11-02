@@ -21,7 +21,7 @@
 | 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 완료    |
 | 6    | `06-race.ts`                 | 여러 작업을 경쟁시키고 승자 선택하기       | 완료    |
 | 7    | `07-deferred-and-queue.ts`   | Fiber 사이에 신호와 값을 전달하기          | 완료    |
-| 8    | `08-semaphore.ts`            | 공유 자원 접근 개수 제한하기               | 진행 중 |
+| 8    | `08-semaphore.ts`            | 공유 자원 접근 개수 제한하기               | 완료    |
 
 ## 01. `acquireUseRelease`
 
@@ -105,16 +105,27 @@ Deferred → 한 번의 완료 신호 또는 결과 공유
 Queue    → 여러 값을 순서대로 생산·소비
 ```
 
+## 08. `TxSemaphore`
+
+Semaphore는 permit 개수로 특정 공유 구간에 동시에 들어갈 수 있는 Fiber 수를 제한합니다. permit이 1개이면 작업 전체는 동시 진행할 수 있어도 `withPermit`으로 감싼 보호 구간에는 한 Fiber만 진입합니다.
+
+```text
+일반 작업: A, B, C 동시 진행 가능
+보호 구간: A 종료 → B 진입 → B 종료 → C 진입
+```
+
+`TxSemaphore.withPermit`은 보호 Effect가 성공, 실패, interruption 중 어떤 방식으로 종료돼도 permit을 자동 반환합니다. `Effect.all`의 concurrency는 특정 작업 묶음 전체를 제한하지만 Semaphore는 프로그램 여러 곳에서 공유되는 특정 자원 또는 critical section을 제한합니다.
+
 
 
 
 ## 완료 조건
 
-- [ ] 자원이 성공·실패·중단 상황에서 언제 정리되는지 설명할 수 있다.
-- [ ] Fiber를 생성하고 join하거나 interrupt할 수 있다.
-- [ ] 작업을 순차, 병렬, 제한된 동시성으로 실행할 수 있다.
-- [ ] race에서 패배한 Fiber의 처리 방식을 설명할 수 있다.
-- [ ] Deferred, Queue, Semaphore의 역할을 구분할 수 있다.
+- [x] 자원이 성공·실패·중단 상황에서 언제 정리되는지 설명할 수 있다.
+- [x] Fiber를 생성하고 join하거나 interrupt할 수 있다.
+- [x] 작업을 순차, 병렬, 제한된 동시성으로 실행할 수 있다.
+- [x] race에서 패배한 Fiber의 처리 방식을 설명할 수 있다.
+- [x] Deferred, Queue, Semaphore의 역할을 구분할 수 있다.
 
 ## 참고
 
