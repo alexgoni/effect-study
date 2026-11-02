@@ -19,10 +19,9 @@
 | 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 완료    |
 | 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 완료    |
 | 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 완료    |
-| 6    | `06-concurrency-limit.ts`    | 동시에 실행할 작업 수 제한하기             | 예정    |
-| 7    | `07-race.ts`                 | 여러 작업을 경쟁시키고 승자 선택하기       | 예정    |
-| 8    | `08-deferred-and-queue.ts`   | Fiber 사이에 신호와 값을 전달하기          | 예정    |
-| 9    | `09-semaphore.ts`            | 공유 자원 접근 개수 제한하기               | 예정    |
+| 6    | `06-race.ts`                 | 여러 작업을 경쟁시키고 승자 선택하기       | 완료    |
+| 7    | `07-deferred-and-queue.ts`   | Fiber 사이에 신호와 값을 전달하기          | 진행 중 |
+| 8    | `08-semaphore.ts`            | 공유 자원 접근 개수 제한하기               | 예정    |
 
 ## 01. `acquireUseRelease`
 
@@ -82,6 +81,20 @@ Fiber.join → 자식 완료를 기다리고 성공값 받기
 ```
 
 동시 실행에서는 완료 순서가 `C → B → A`여도 `Effect.all`의 결과 배열은 입력 순서인 `[A, B, C]`를 유지합니다. `runPromise`의 Promise를 `await`하지 않고 시간을 재면 작업 완료 전의 시간이 측정되고 결과도 pending Promise이므로, 전체 실행 시간은 반드시 `await` 이후에 계산합니다.
+
+## 06. `Effect.race`
+
+`Effect.race`는 두 Effect를 동시에 실행해 먼저 성공한 값을 반환하고, 나머지 Fiber를 interruption 합니다. 100ms 작업과 300ms 작업을 경쟁시키면 약 100ms에 빠른 작업의 결과가 반환되고 느린 작업의 완료 부분은 실행되지 않습니다.
+
+```text
+fast 성공
+→ slow Fiber 중단
+→ fast 성공값 반환
+```
+
+먼저 실패한 작업은 승자가 아니므로 다른 작업의 성공을 계속 기다립니다. 성공과 실패를 구분하지 않고 먼저 완료된 결과를 선택하려면 `raceFirst`가 필요합니다.
+
+
 
 ## 완료 조건
 
