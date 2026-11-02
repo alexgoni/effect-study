@@ -18,7 +18,7 @@
 | 2    | `02-scoped-resource.ts`      | Scope에 자원 생명주기 연결하기             | 완료    |
 | 3    | `03-fork-and-join.ts`        | Fiber 생성과 완료 기다리기                 | 완료    |
 | 4    | `04-interruption-cleanup.ts` | Fiber 중단 시 finalizer 실행 확인하기      | 완료    |
-| 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 예정    |
+| 5    | `05-parallel-all.ts`         | 순차 실행과 병렬 실행 비교하기             | 완료    |
 | 6    | `06-concurrency-limit.ts`    | 동시에 실행할 작업 수 제한하기             | 예정    |
 | 7    | `07-race.ts`                 | 여러 작업을 경쟁시키고 승자 선택하기       | 예정    |
 | 8    | `08-deferred-and-queue.ts`   | Fiber 사이에 신호와 값을 전달하기          | 예정    |
@@ -72,6 +72,16 @@ Fiber.join → 자식 완료를 기다리고 성공값 받기
 
 `Fiber.interrupt` 다음 작업이 release 이후에 실행되는 순서로 cleanup 완료까지 기다린다는 사실을 확인할 수 있습니다. interruption은 예상 오류 타입 `E`가 아니라 Fiber의 종료 Cause로 관리됩니다.
 
+## 05. `Effect.all`의 동시성
+
+`Effect.all`은 기본적으로 입력 Effect를 순차 실행하며, `{ concurrency: "unbounded" }`를 지정하면 각각을 동시 진행합니다. 300ms, 200ms, 100ms 작업의 순차 실행은 약 600ms, 동시 실행은 가장 긴 작업에 가까운 약 300ms가 걸렸습니다.
+
+```text
+순차 실행 시간 ≈ 300 + 200 + 100
+동시 실행 시간 ≈ max(300, 200, 100)
+```
+
+동시 실행에서는 완료 순서가 `C → B → A`여도 `Effect.all`의 결과 배열은 입력 순서인 `[A, B, C]`를 유지합니다. `runPromise`의 Promise를 `await`하지 않고 시간을 재면 작업 완료 전의 시간이 측정되고 결과도 pending Promise이므로, 전체 실행 시간은 반드시 `await` 이후에 계산합니다.
 
 ## 완료 조건
 
