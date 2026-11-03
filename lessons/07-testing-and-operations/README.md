@@ -1,3 +1,52 @@
 # 07. 테스트와 운영 기능
 
 테스트, 로깅, 설정, Stream 등 운영에 필요한 기능을 학습합니다.
+
+## 학습 목표
+
+- 외부 시스템 없이 업무 프로그램을 테스트한다.
+- 시간 기반 Effect를 실제 대기 없이 검증한다.
+- 구조화된 로그와 설정을 Effect 프로그램에 연결한다.
+- 여러 값을 Stream으로 처리하고 backpressure를 이해한다.
+- 반복 계산과 요청을 cache 및 batching으로 최적화한다.
+
+## 학습 내역
+
+| 순서 | 파일 | 내용 | 상태 |
+| --- | --- | --- | --- |
+| 1 | `01-test-layer.ts` | 테스트 Layer로 서비스 구현 교체하기 | 완료 |
+| 2 | `02-test-clock.ts` | 가상 시간으로 sleep과 timeout 테스트하기 | 진행 중 |
+| 3 | `03-structured-logging.ts` | 로그 레벨과 annotation 사용하기 | 예정 |
+| 4 | `04-config.ts` | 설정값을 typed error와 함께 읽기 | 예정 |
+| 5 | `05-metrics-and-tracing.ts` | metrics와 span으로 실행 관찰하기 | 예정 |
+| 6 | `06-stream.ts` | 여러 값을 Stream으로 처리하기 | 예정 |
+| 7 | `07-backpressure.ts` | 생산자와 소비자의 속도 차이 다루기 | 예정 |
+| 8 | `08-cache-and-batching.ts` | 반복 작업을 cache하고 요청 합치기 | 예정 |
+
+## 01. 테스트 Layer
+
+업무 프로그램은 서비스 계약에만 의존하고, 테스트에서는 `Layer.succeed`로 결정적인 구현을 제공합니다. 실제 ID 생성기 대신 항상 같은 ID를 반환하는 Layer를 제공하면 외부 시스템 없이 결과를 반복 검증할 수 있습니다.
+
+```text
+createUser("test")
+→ testIdGeneratorLayer 제공
+→ { id: "test-id-1", name: "test" }
+→ deepStrictEqual로 검증
+```
+
+`Effect.provideService`는 구현 객체를 직접 받고, `Effect.provide`는 Layer를 받습니다. Node의 `deepStrictEqual`은 객체 참조가 아니라 내부 구조와 값을 비교하며 성공하면 `void`, 실패하면 `AssertionError`를 던집니다.
+
+
+## 완료 조건
+
+- [ ] 테스트 Layer로 외부 의존성을 결정적인 값으로 교체할 수 있다.
+- [ ] `TestClock`으로 실제 시간을 기다리지 않고 시간 기반 로직을 검사할 수 있다.
+- [ ] 구조화된 로그와 Config를 프로그램에 적용할 수 있다.
+- [ ] Stream의 성공값, 오류, 종료를 설명할 수 있다.
+- [ ] backpressure, cache, batching이 해결하는 문제를 구분할 수 있다.
+
+## 참고
+
+- [Testing](https://effect.website/docs/v4/testing/testclock)
+- [Observability](https://effect.website/docs/v4/observability/logging)
+- [Stream](https://effect.website/docs/v4/stream/introduction)
