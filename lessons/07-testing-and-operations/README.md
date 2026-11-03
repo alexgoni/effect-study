@@ -16,7 +16,7 @@
 | --- | --- | --- | --- |
 | 1 | `01-test-layer.ts` | 테스트 Layer로 서비스 구현 교체하기 | 완료 |
 | 2 | `02-test-clock.ts` | 가상 시간으로 sleep과 timeout 테스트하기 | 완료 |
-| 3 | `03-structured-logging.ts` | 로그 레벨과 annotation 사용하기 | 예정 |
+| 3 | `03-structured-logging.ts` | 로그 레벨과 annotation 사용하기 | 완료 |
 | 4 | `04-config.ts` | 설정값을 typed error와 함께 읽기 | 예정 |
 | 5 | `05-metrics-and-tracing.ts` | metrics와 span으로 실행 관찰하기 | 예정 |
 | 6 | `06-stream.ts` | 여러 값을 Stream으로 처리하기 | 예정 |
@@ -49,6 +49,21 @@ createUser("test")
 ```
 
 `TestClock.layer()`는 Effect Runtime이 기본 제공하는 실제 `Clock`을 테스트용 Clock으로 교체합니다. `Clock`은 기본 Runtime 서비스라 Effect 타입의 환경 채널 `R`에 나타나지 않으므로, 프로그램의 타입이 `Effect<string, never, never>`여도 이 Layer를 제공해야 `TestClock.adjust`를 사용할 수 있습니다.
+
+## 03. 구조화된 로깅
+
+`Effect.logInfo`, `Effect.logWarning`, `Effect.logError`는 로그의 심각도를 구분하며 각각 즉시 출력하는 대신 `Effect<void>`를 반환합니다. 동기적인 로그만 포함한 프로그램은 `Effect.runSync`로 실행할 수 있습니다.
+
+`Effect.annotateLogs`로 프로그램을 감싸면 그 범위 안에서 발생하는 모든 로그에 `orderId` 같은 구조화된 부가 정보를 붙일 수 있습니다.
+
+```text
+annotateLogs(program, { orderId: "order-123" })
+→ INFO  메시지 { orderId: "order-123" }
+→ WARN  메시지 { orderId: "order-123" }
+→ ERROR 메시지 { orderId: "order-123" }
+```
+
+로그 메시지 문자열에 식별자를 직접 조합하는 것과 달리 annotation은 데이터를 별도 필드로 유지하므로 로그 수집 도구에서 필드별 검색과 필터링에 사용할 수 있습니다.
 
 ## 완료 조건
 
