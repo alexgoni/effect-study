@@ -756,3 +756,21 @@ Effect runtime
 ```
 
 이 방식은 Fiber가 대기 지점에서 실행권을 양보하는 협력적 스케줄링이다. JavaScript thread가 쉬는 비동기 대기 시간에 다른 Fiber를 진행할 수 있지만, 긴 반복문처럼 동기 코드가 thread를 계속 점유하면 다른 Fiber도 진행하지 못한다.
+
+## `R = never`인데도 `TestClock.layer()`가 필요한 이유
+
+Effect 타입의 세 번째 자리 `R`이 `never`라는 것은 사용자가 Context를 통해 제공해야 할 일반 서비스 의존성이 없다는 뜻이다. Effect Runtime이 기본으로 제공하는 `Clock` 같은 서비스까지 전혀 사용하지 않는다는 의미는 아니다.
+
+`Effect.sleep`과 `TestClock.adjust`는 기본 Clock 서비스에 접근하지만 이 의존성은 `R`에 나타나지 않는다. `TestClock.adjust`는 현재 Fiber에 설치된 Clock을 테스트용 Clock으로 간주하고 가상 시간을 조절한다.
+
+```text
+Layer를 제공하지 않음
+→ 현재 Clock은 실제 Clock
+→ TestClock 전용 adjust를 사용할 수 없음
+
+TestClock.layer() 제공
+→ 현재 Clock을 TestClock으로 교체
+→ adjust로 가상 시간을 이동할 수 있음
+```
+
+따라서 `Effect.provide(program, TestClock.layer())`는 타입에 표시된 미충족 `R`을 채우는 것보다, Runtime의 기본 Clock 구현을 테스트 구현으로 교체하는 역할을 한다.

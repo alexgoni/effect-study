@@ -15,7 +15,7 @@
 | 순서 | 파일 | 내용 | 상태 |
 | --- | --- | --- | --- |
 | 1 | `01-test-layer.ts` | 테스트 Layer로 서비스 구현 교체하기 | 완료 |
-| 2 | `02-test-clock.ts` | 가상 시간으로 sleep과 timeout 테스트하기 | 진행 중 |
+| 2 | `02-test-clock.ts` | 가상 시간으로 sleep과 timeout 테스트하기 | 완료 |
 | 3 | `03-structured-logging.ts` | 로그 레벨과 annotation 사용하기 | 예정 |
 | 4 | `04-config.ts` | 설정값을 typed error와 함께 읽기 | 예정 |
 | 5 | `05-metrics-and-tracing.ts` | metrics와 span으로 실행 관찰하기 | 예정 |
@@ -36,11 +36,24 @@ createUser("test")
 
 `Effect.provideService`는 구현 객체를 직접 받고, `Effect.provide`는 Layer를 받습니다. Node의 `deepStrictEqual`은 객체 참조가 아니라 내부 구조와 값을 비교하며 성공하면 `void`, 실패하면 `AssertionError`를 던집니다.
 
+## 02. TestClock
+
+`TestClock`은 실제 시간을 기다리지 않고 `sleep` 같은 시간 기반 Effect를 검사하게 합니다. 먼저 지연 작업을 자식 Fiber로 시작한 뒤 `TestClock.adjust`로 가상 시간을 이동하고, `Fiber.join`으로 자식의 성공값을 얻습니다.
+
+```text
+지연 작업을 자식 Fiber로 시작
+→ 자식이 1시간 sleep
+→ TestClock을 1시간 이동
+→ sleep 완료
+→ Fiber.join으로 "완료" 획득
+```
+
+`TestClock.layer()`는 Effect Runtime이 기본 제공하는 실제 `Clock`을 테스트용 Clock으로 교체합니다. `Clock`은 기본 Runtime 서비스라 Effect 타입의 환경 채널 `R`에 나타나지 않으므로, 프로그램의 타입이 `Effect<string, never, never>`여도 이 Layer를 제공해야 `TestClock.adjust`를 사용할 수 있습니다.
 
 ## 완료 조건
 
-- [ ] 테스트 Layer로 외부 의존성을 결정적인 값으로 교체할 수 있다.
-- [ ] `TestClock`으로 실제 시간을 기다리지 않고 시간 기반 로직을 검사할 수 있다.
+- [x] 테스트 Layer로 외부 의존성을 결정적인 값으로 교체할 수 있다.
+- [x] `TestClock`으로 실제 시간을 기다리지 않고 시간 기반 로직을 검사할 수 있다.
 - [ ] 구조화된 로그와 Config를 프로그램에 적용할 수 있다.
 - [ ] Stream의 성공값, 오류, 종료를 설명할 수 있다.
 - [ ] backpressure, cache, batching이 해결하는 문제를 구분할 수 있다.
