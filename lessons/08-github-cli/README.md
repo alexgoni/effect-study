@@ -1,0 +1,48 @@
+# 08. GitHub 저장소 정보 조회 CLI
+
+지금까지 학습한 Effect의 생성, 합성, 오류, Schema, Service, Layer, 동시성, 테스트와 운영 기능을 하나의 프로그램에 적용합니다.
+
+## 프로젝트 목표
+
+- 외부에서 받은 GitHub 저장소 응답을 Schema로 검증한다.
+- 예상 가능한 네트워크·인증·저장소 없음 오류를 타입으로 구분한다.
+- HTTP 접근을 Service 계약과 Layer 구현으로 분리한다.
+- Test Layer로 네트워크 없이 업무 흐름을 검사한다.
+- 여러 저장소를 제한된 동시성으로 조회하고 retry와 timeout을 적용한다.
+- 구조화된 로그, Metric, Span으로 실행을 관찰한다.
+- 조회 결과를 Stream으로 출력한다.
+
+## 학습 내역
+
+| 순서 | 파일 | 내용 | 상태 |
+| --- | --- | --- | --- |
+| 1 | `01-parse-repository.ts` | 외부 저장소 응답을 Schema로 검증하기 | 완료 |
+| 2 | `02-domain-errors.ts` | 네트워크·인증·저장소 없음 오류 구분하기 | 예정 |
+| 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 예정 |
+| 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 예정 |
+| 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 예정 |
+| 6 | `06-concurrent-fetch.ts` | 제한된 동시성, retry, timeout 적용하기 | 예정 |
+| 7 | `07-observability.ts` | 로그, Metric, Span으로 실행 관찰하기 | 예정 |
+| 8 | `08-stream-output.ts` | 여러 조회 결과를 Stream으로 출력하기 | 예정 |
+
+## 01. 외부 저장소 응답 검증
+
+GitHub API처럼 애플리케이션 외부에서 들어오는 데이터는 검증 전까지 `unknown`으로 유지합니다. `RepositoryResponseSchema`는 `name`, `full_name`, `stargazers_count` 필드를 검증하고, `Schema.decodeUnknownEffect`는 Schema의 성공 타입과 `SchemaError`를 가진 Effect를 만듭니다.
+
+```text
+외부 응답 unknown
+→ RepositoryResponseSchema로 검증
+→ 성공: 타입이 보장된 저장소 응답
+→ 실패: 잘못된 필드 경로를 포함한 SchemaError
+```
+
+고정 fixture는 HTTP 문제를 섞지 않고 외부 데이터 경계를 검증하기 위한 샘플입니다. 이후 Live Layer에서는 실제 GitHub API를 호출하고, Test Layer에서는 네트워크를 대체하는 테스트 구현을 제공합니다.
+
+## 완료 조건
+
+- [ ] 외부 응답이 검증되기 전에는 `unknown`임을 유지한다.
+- [ ] 오류 타입과 서비스 요구사항만 보고 프로그램의 실패와 의존성을 파악할 수 있다.
+- [ ] 업무 프로그램이 실제 HTTP 구현을 직접 import하지 않는다.
+- [ ] Test Layer로 네트워크 없이 주요 성공·실패 흐름을 검증한다.
+- [ ] 동시성, retry, timeout과 자원 수명을 안전하게 관리한다.
+- [ ] 실행 결과와 운영 정보를 로그, Metric, Span, Stream으로 관찰할 수 있다.
