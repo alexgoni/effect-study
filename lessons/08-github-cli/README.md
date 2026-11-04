@@ -18,7 +18,7 @@
 | --- | --- | --- | --- |
 | 1 | `01-parse-repository.ts` | 외부 저장소 응답을 Schema로 검증하기 | 완료 |
 | 2 | `02-domain-errors.ts` | 네트워크·인증·저장소 없음 오류 구분하기 | 완료 |
-| 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 예정 |
+| 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 완료 |
 | 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 예정 |
 | 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 예정 |
 | 6 | `06-concurrent-fetch.ts` | 제한된 동시성, retry, timeout 적용하기 | 예정 |
@@ -50,6 +50,21 @@ InvalidResponse      SchemaError를 cause로 보존
 ```
 
 네 오류는 `GitHubError` union으로 묶어 GitHub 프로그램의 오류 채널에 사용합니다. 타입 수준에서는 가능한 실패 전체를 표현하고, 런타임의 `Exit.Failure`에는 실제로 발생한 오류 한 개와 해당 필드가 들어갑니다.
+
+## 03. GitHub Service 계약
+
+외부 API 응답과 구분되는 도메인 `Repository` 모델과 `getRepository(owner, repository)` 능력을 가진 `GitHubService` 계약을 정의합니다. 계약의 반환 타입은 `Effect<Repository, GitHubError>`입니다.
+
+TypeScript 인터페이스는 컴파일 후 사라지므로 `Context.Service`로 Runtime이 구현을 찾을 수 있는 `GitHub` 식별자를 만듭니다. 업무 프로그램은 `Effect.service(GitHub)`로 구현을 요청하고 구체적인 HTTP 방식을 알지 않은 채 계약만 사용합니다.
+
+```text
+getRepositoryProgram
+→ 성공: Repository
+→ 오류: GitHubError
+→ 요구사항: GitHub
+```
+
+`import type`은 오류 union을 타입으로만 재사용하며 런타임에는 import를 남기지 않습니다.
 
 ## 완료 조건
 

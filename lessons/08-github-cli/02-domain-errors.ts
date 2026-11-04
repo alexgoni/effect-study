@@ -26,3 +26,5 @@ const failGitHub = (error: GitHubError) => Effect.fail(error);
 const error = new RepositoryNotFound({ owner: "asdf", repository: "asdf" });
 
 console.log(JSON.stringify(Effect.runSyncExit(failGitHub(error)), null, 2));
+
+export type { GitHubError };
