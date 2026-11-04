@@ -1,4 +1,4 @@
-import { Data, Effect, Schema } from "effect";
+import { Data, Schema } from "effect";
 
 class RepositoryNotFound extends Data.TaggedError("RepositoryNotFound")<{
   readonly owner: string;
@@ -21,10 +21,5 @@ type GitHubError =
   | RepositoryNotFound
   | InvalidResponse;
 
-const failGitHub = (error: GitHubError) => Effect.fail(error);
-
-const error = new RepositoryNotFound({ owner: "asdf", repository: "asdf" });
-
-console.log(JSON.stringify(Effect.runSyncExit(failGitHub(error)), null, 2));
-
+export { InvalidResponse, NetworkError, RepositoryNotFound, Unauthorized };
 export type { GitHubError };

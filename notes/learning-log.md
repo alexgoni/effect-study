@@ -815,3 +815,40 @@ A → Effect<B, E, R>
 ```
 
 `Stream.runDrain`은 Stream을 끝까지 실행하지만 방출된 성공값은 저장하지 않는다. 반환 타입은 `Effect<void, E, R>`이며, 성공값만 버릴 뿐 Stream 내부의 Effect와 실패는 그대로 실행하고 전달한다. 로그나 저장처럼 실행 자체가 목적이고 최종 값이 필요 없을 때 사용한다.
+
+## `Layer.succeed`에서 무엇이 성공한다는 뜻인가
+
+`Layer.succeed`는 서비스가 제공하는 모든 작업이 항상 성공한다는 의미가 아니다. **서비스 구현 객체를 준비하는 과정**이 Effect 없이 즉시 성공한다는 의미다.
+
+```ts
+const implementation = {
+  getRepository: fetchRepository,
+};
+```
+
+이 코드는 `fetchRepository` 함수를 객체에 저장할 뿐 HTTP 요청을 실행하지 않는다. 따라서 구현 객체는 즉시 준비할 수 있고 `Layer.succeed(GitHub, implementation)`으로 제공할 수 있다.
+
+```text
+Layer.succeed로 구현 객체 준비
+→ { getRepository: 함수 }
+→ 네트워크 요청 없음
+
+getRepository(owner, repository) 호출
+→ Effect<Repository, GitHubError> 생성
+
+그 Effect를 runtime이 실행
+→ 실제 HTTP 요청
+→ Repository로 성공하거나 GitHubError로 실패
+```
+
+따라서 Layer 구성의 오류 채널과 서비스 메서드의 오류 채널은 서로 다르다.
+
+```text
+Layer<GitHub, never, never>
+→ 서비스 구현 객체 구성은 실패하지 않음
+
+Effect<Repository, GitHubError>
+→ 구성된 서비스의 조회 작업은 실패할 수 있음
+```
+
+반대로 Config에서 인증 토큰을 읽거나 연결을 여는 등 서비스 객체 자체를 만들 때 Effect 작업이 필요하면 `Layer.effect`를 사용한다.

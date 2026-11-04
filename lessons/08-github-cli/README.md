@@ -19,7 +19,7 @@
 | 1 | `01-parse-repository.ts` | 외부 저장소 응답을 Schema로 검증하기 | 완료 |
 | 2 | `02-domain-errors.ts` | 네트워크·인증·저장소 없음 오류 구분하기 | 완료 |
 | 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 완료 |
-| 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 예정 |
+| 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 완료 |
 | 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 예정 |
 | 6 | `06-concurrent-fetch.ts` | 제한된 동시성, retry, timeout 적용하기 | 예정 |
 | 7 | `07-observability.ts` | 로그, Metric, Span으로 실행 관찰하기 | 예정 |
@@ -65,6 +65,22 @@ getRepositoryProgram
 ```
 
 `import type`은 오류 union을 타입으로만 재사용하며 런타임에는 import를 남기지 않습니다.
+
+## 04. 실제 HTTP Layer
+
+`fetch`를 `Effect.tryPromise`로 감싸 Promise rejection을 `NetworkError`로 변환합니다. `fetch`는 HTTP 404에서도 Promise가 성공하므로 상태 코드를 검사해 `RepositoryNotFound`, `Unauthorized` 같은 도메인 오류로 바꿉니다.
+
+응답 본문은 문자열로 읽고 `Schema.fromJsonString(RepositoryResponseSchema)`로 JSON 문법과 필드 구조를 함께 검증합니다. `SchemaError`는 `InvalidResponse`로 변환하고, 검증된 snake_case 응답은 camelCase 도메인 `Repository`로 매핑합니다.
+
+```text
+fetch
+→ HTTP 상태 코드 처리
+→ 응답 body 문자열
+→ JSON 문법 + RepositoryResponseSchema 검증
+→ 외부 응답을 도메인 Repository로 변환
+```
+
+서비스 구현 객체는 Effect 없이 즉시 준비할 수 있으므로 `Layer.succeed`로 `GitHubLive`를 제공합니다. 이는 Layer 구성이 실패하지 않는다는 뜻이며, `getRepository`가 반환하는 HTTP Effect는 여전히 `GitHubError`로 실패할 수 있습니다.
 
 ## 완료 조건
 
