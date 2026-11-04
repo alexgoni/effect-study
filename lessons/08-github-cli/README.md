@@ -20,7 +20,7 @@
 | 2 | `02-domain-errors.ts` | 네트워크·인증·저장소 없음 오류 구분하기 | 완료 |
 | 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 완료 |
 | 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 완료 |
-| 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 예정 |
+| 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 완료 |
 | 6 | `06-concurrent-fetch.ts` | 제한된 동시성, retry, timeout 적용하기 | 예정 |
 | 7 | `07-observability.ts` | 로그, Metric, Span으로 실행 관찰하기 | 예정 |
 | 8 | `08-stream-output.ts` | 여러 조회 결과를 Stream으로 출력하기 | 예정 |
@@ -81,6 +81,18 @@ fetch
 ```
 
 서비스 구현 객체는 Effect 없이 즉시 준비할 수 있으므로 `Layer.succeed`로 `GitHubLive`를 제공합니다. 이는 Layer 구성이 실패하지 않는다는 뜻이며, `getRepository`가 반환하는 HTTP Effect는 여전히 `GitHubError`로 실패할 수 있습니다.
+
+## 05. Test Layer
+
+같은 `GitHub` 계약에 실제 HTTP 대신 고정 fixture를 반환하는 `GitHubTest`를 제공합니다. 업무 프로그램은 구현을 직접 import하지 않으므로 `GitHubLive`와 `GitHubTest` 중 어떤 Layer가 제공됐는지 알 필요가 없습니다.
+
+```text
+getRepositoryProgram
+├── GitHubLive 제공  → 실제 HTTP
+└── GitHubTest 제공  → 고정 성공 또는 RepositoryNotFound
+```
+
+성공 테스트는 `runSync` 결과와 fixture를 `deepStrictEqual`로 비교합니다. 실패 테스트는 `runSyncExit`의 실제 `Exit.Failure`와 `Exit.fail(expectedError)`를 비교해 오류 태그와 저장소 식별 정보까지 검증합니다.
 
 ## 완료 조건
 
