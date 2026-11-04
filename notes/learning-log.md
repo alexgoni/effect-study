@@ -774,3 +774,18 @@ TestClock.layer() 제공
 ```
 
 따라서 `Effect.provide(program, TestClock.layer())`는 타입에 표시된 미충족 `R`을 채우는 것보다, Runtime의 기본 Clock 구현을 테스트 구현으로 교체하는 역할을 한다.
+
+## Config의 키와 검증 규칙은 어디에 정의되는가
+
+`Config.Port("PORT")`에서 문자열 `"PORT"`는 ConfigProvider에서 원시 값을 찾을 키다. 문자열 자체에는 숫자 변환이나 범위 검사 규칙이 들어 있지 않다.
+
+검증 규칙은 `Config.Port` 생성자 내부에 정의된 Schema에서 온다. Effect 4의 구현은 `Schema.Int`에 `1~65535` 범위 검사를 추가한 `PortSchema`를 사용한다.
+
+```text
+Config.Port             정수 변환 + 포트 범위 검증 규칙
+"PORT"                  Provider에서 찾을 키
+ConfigProvider          키에 대응하는 원시 값의 출처
+config.parse(provider)  규칙과 출처를 연결한 Effect
+```
+
+따라서 같은 `"PORT"` 키라도 `Config.String("PORT")`, `Config.Int("PORT")`, `Config.Port("PORT")`는 각각 다른 변환과 검증을 수행한다.

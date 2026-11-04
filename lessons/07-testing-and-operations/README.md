@@ -17,7 +17,7 @@
 | 1 | `01-test-layer.ts` | 테스트 Layer로 서비스 구현 교체하기 | 완료 |
 | 2 | `02-test-clock.ts` | 가상 시간으로 sleep과 timeout 테스트하기 | 완료 |
 | 3 | `03-structured-logging.ts` | 로그 레벨과 annotation 사용하기 | 완료 |
-| 4 | `04-config.ts` | 설정값을 typed error와 함께 읽기 | 예정 |
+| 4 | `04-config.ts` | 설정값을 typed error와 함께 읽기 | 완료 |
 | 5 | `05-metrics-and-tracing.ts` | metrics와 span으로 실행 관찰하기 | 예정 |
 | 6 | `06-stream.ts` | 여러 값을 Stream으로 처리하기 | 예정 |
 | 7 | `07-backpressure.ts` | 생산자와 소비자의 속도 차이 다루기 | 예정 |
@@ -65,11 +65,26 @@ annotateLogs(program, { orderId: "order-123" })
 
 로그 메시지 문자열에 식별자를 직접 조합하는 것과 달리 annotation은 데이터를 별도 필드로 유지하므로 로그 수집 도구에서 필드별 검색과 필터링에 사용할 수 있습니다.
 
+## 04. Config
+
+`Config`는 어떤 키를 어떤 타입으로 읽고 검증할지 설명하고, `ConfigProvider`는 원시 설정값을 제공하며, `config.parse(provider)`는 둘을 연결한 Effect를 만듭니다.
+
+```text
+Config.Port("PORT")       읽기·변환·검증 규칙
+ConfigProvider            { PORT: "3000" }을 제공
+→ parse                   Effect<number, ConfigError>
+→ runSync                 3000
+```
+
+`"PORT"` 문자열은 Provider에서 찾을 키일 뿐이다. 정수 변환과 `1~65535` 범위 검사는 `Config.Port` 내부의 `PortSchema`에 정의되어 있습니다. 따라서 같은 키도 `Config.String`, `Config.Int`, `Config.Port` 중 무엇을 선택하는지에 따라 검증 규칙이 달라집니다.
+
+잘못된 값은 `ConfigError`로 오류 채널에 들어갑니다. `runSyncExit`을 사용하면 예외로 종료하지 않고 `Exit.Failure → Cause.Fail → ConfigError → SchemaError` 구조와 실패한 설정 경로를 확인할 수 있습니다.
+
 ## 완료 조건
 
 - [x] 테스트 Layer로 외부 의존성을 결정적인 값으로 교체할 수 있다.
 - [x] `TestClock`으로 실제 시간을 기다리지 않고 시간 기반 로직을 검사할 수 있다.
-- [ ] 구조화된 로그와 Config를 프로그램에 적용할 수 있다.
+- [x] 구조화된 로그와 Config를 프로그램에 적용할 수 있다.
 - [ ] Stream의 성공값, 오류, 종료를 설명할 수 있다.
 - [ ] backpressure, cache, batching이 해결하는 문제를 구분할 수 있다.
 
