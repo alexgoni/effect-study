@@ -58,3 +58,15 @@ process-order
 ```
 
 `Effect.withSpan`은 Effect의 실행을 Span으로 감싸고 종료 결과와 함께 Span을 자동으로 닫는다. `Effect.currentSpan`은 현재 활성 Span을 얻고, `Effect.annotateCurrentSpan`은 주문 ID 같은 검색 가능한 정보를 붙인다. Fiber가 작업을 실행하는 단위라면 Span은 그 작업의 특정 구간을 관찰하기 위한 기록이다.
+
+## Stream
+
+시간에 따라 0개 이상의 값을 방출하고 정상 종료하거나 실패할 수 있는 프로그램이다. 배열이 이미 준비된 값들의 자료구조라면 Stream은 값의 생성, 변환, 소비, 오류와 종료 과정을 실행 전에 조합한다.
+
+```text
+값 방출   다음 값을 소비자에게 전달
+정상 종료 더 이상 값이 없음
+실패      오류 채널의 값과 함께 중단
+```
+
+`runCollect`은 모든 값을 배열로 모으지만 전체 Stream이 성공해야 결과를 얻는다. `runForEach`는 값을 모으지 않고 방출되는 각 값에 Effect인 소비 함수를 실행한다.
