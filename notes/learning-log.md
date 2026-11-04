@@ -803,3 +803,15 @@ Span    특정 결제 요청이 90ms 동안 실행됨
 Span에는 이름, 시작·종료 시각, 종료 결과, 업무 속성과 부모·자식 관계가 들어간다. `Effect.withSpan(program, "process-orders")`는 프로그램 실행 구간을 Span으로 만들고, `annotateCurrentSpan`은 `orders.count` 같은 정보를 현재 Span에 추가한다.
 
 Span은 실행 주체가 아니다. Fiber가 Effect를 실행하고, Span은 실행 중 특정 작업 구간을 관찰하기 위해 남기는 기록이다.
+
+## `mapEffect`와 `runDrain`
+
+`Stream.map`의 콜백은 일반 값을 반환하지만 `Stream.mapEffect`의 콜백은 Effect를 반환한다. 각 입력값에 비동기 작업, 실패, 서비스 의존성이나 로그 같은 Effect 작업이 필요할 때 사용한다. 콜백 Effect의 성공값은 다음 Stream 값이 되고, 실패하면 Stream도 실패한다.
+
+```text
+A → Effect<B, E, R>
+→ mapEffect
+→ Stream<B, E, R>
+```
+
+`Stream.runDrain`은 Stream을 끝까지 실행하지만 방출된 성공값은 저장하지 않는다. 반환 타입은 `Effect<void, E, R>`이며, 성공값만 버릴 뿐 Stream 내부의 Effect와 실패는 그대로 실행하고 전달한다. 로그나 저장처럼 실행 자체가 목적이고 최종 값이 필요 없을 때 사용한다.

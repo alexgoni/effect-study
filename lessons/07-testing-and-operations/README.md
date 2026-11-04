@@ -20,7 +20,7 @@
 | 4 | `04-config.ts` | 설정값을 typed error와 함께 읽기 | 완료 |
 | 5 | `05-metrics-and-tracing.ts` | metrics와 span으로 실행 관찰하기 | 완료 |
 | 6 | `06-stream.ts` | 여러 값을 Stream으로 처리하기 | 완료 |
-| 7 | `07-backpressure.ts` | 생산자와 소비자의 속도 차이 다루기 | 예정 |
+| 7 | `07-backpressure.ts` | 생산자와 소비자의 속도 차이 다루기 | 완료 |
 | 8 | `08-cache-and-batching.ts` | 반복 작업을 cache하고 요청 합치기 | 예정 |
 
 ## 01. 테스트 Layer
@@ -112,6 +112,22 @@ Stream<number>
 Stream은 값 방출, 정상 종료, 실패를 구분합니다. 정상 종료는 더 이상 값이 없다는 뜻이며 오류가 아닙니다. `Stream.fail`을 연결하면 오류 채널로 실패하고, 이전에 값이 방출됐더라도 `runCollect` 전체는 실패합니다.
 
 `map`, `concat` 같은 연산은 기존 Stream을 변경하지 않고 새 Stream을 반환합니다. 따라서 반환값을 다음 단계에 연결하거나 변수에 저장해야 합니다.
+
+## 07. Backpressure
+
+Backpressure는 생산자가 소비자보다 빠를 때 처리되지 않은 값이 무제한으로 쌓이지 않도록 흐름을 조절합니다. Effect Stream은 기본적으로 pull 기반이라 소비자가 현재 값의 처리를 끝낸 뒤 다음 값을 요청합니다.
+
+`Stream.tap`으로 생산 시점을 관찰하고, `Stream.mapEffect`에서 `sleep`이 포함된 느린 소비를 실행하면 기본 동시성 `1`에서 생산과 소비가 한 값씩 번갈아 진행됩니다.
+
+```text
+생산 1 → 소비 1 완료
+생산 2 → 소비 2 완료
+생산 3 → 소비 3 완료
+```
+
+`mapEffect`에 `{ concurrency: 2 }`를 지정하면 최대 두 값까지 동시에 처리합니다. 두 작업이 진행 중일 때 생산이 무제한으로 앞서가지 않고, 한 자리가 비어야 다음 값을 가져옵니다.
+
+`Stream.runDrain`은 방출된 성공값은 모으지 않으면서 Stream을 끝까지 실행합니다. 값은 버리지만 Stream 내부의 Effect와 오류는 유지됩니다.
 
 ## 완료 조건
 
