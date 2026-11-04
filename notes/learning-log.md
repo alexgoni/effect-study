@@ -852,3 +852,22 @@ Effect<Repository, GitHubError>
 ```
 
 반대로 Config에서 인증 토큰을 읽거나 연결을 여는 등 서비스 객체 자체를 만들 때 Effect 작업이 필요하면 `Layer.effect`를 사용한다.
+
+## `async` 함수 없이 `await`을 사용할 수 있는 경우
+
+일반 함수 내부에서 `await`을 사용하려면 그 함수가 `async`여야 한다. 그러나 ES module의 파일 최상위에서는 top-level await을 사용할 수 있다.
+
+이 저장소는 `package.json`의 `"type": "module"`과 ES module을 지원하는 TypeScript 설정을 사용하므로 다음 코드가 파일 최상위에서 유효하다.
+
+```ts
+const result = await Effect.runPromise(program);
+```
+
+```text
+ES module 최상위     await 사용 가능
+async 함수 내부      await 사용 가능
+일반 함수 내부       await 사용 불가
+Effect.gen generator await 대신 yield* Effect 사용
+```
+
+`Effect.gen`의 callback은 async 함수가 아니라 generator이므로 Promise를 `await`하는 대신 Effect를 `yield*`하여 성공값을 얻는다.

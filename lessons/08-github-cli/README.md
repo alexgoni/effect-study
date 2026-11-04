@@ -21,7 +21,7 @@
 | 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 완료 |
 | 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 완료 |
 | 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 완료 |
-| 6 | `06-concurrent-fetch.ts` | 제한된 동시성, retry, timeout 적용하기 | 예정 |
+| 6 | `06-concurrent-fetch.ts` | 제한된 동시성, retry, timeout 적용하기 | 완료 |
 | 7 | `07-observability.ts` | 로그, Metric, Span으로 실행 관찰하기 | 예정 |
 | 8 | `08-stream-output.ts` | 여러 조회 결과를 Stream으로 출력하기 | 예정 |
 
@@ -93,6 +93,27 @@ getRepositoryProgram
 ```
 
 성공 테스트는 `runSync` 결과와 fixture를 `deepStrictEqual`로 비교합니다. 실패 테스트는 `runSyncExit`의 실제 `Exit.Failure`와 `Exit.fail(expectedError)`를 비교해 오류 태그와 저장소 식별 정보까지 검증합니다.
+
+## 06. 제한된 동시성, retry, timeout
+
+여러 `getRepositoryProgram`을 `Effect.all`로 합치고 `concurrency: 2`를 지정해 동시에 실행되는 조회를 최대 두 개로 제한합니다. 실행 완료 순서와 관계없이 결과 배열은 입력 순서를 유지합니다.
+
+`NetworkError`만 일시적인 실패로 보고 exponential backoff로 최대 두 번 재시도합니다. `RepositoryNotFound`와 `Unauthorized`처럼 같은 입력에서 반복될 오류는 retry하지 않습니다.
+
+```text
+최초 실행
+→ NetworkError면 100ms 후 첫 retry
+→ 다시 NetworkError면 200ms 후 두 번째 retry
+→ 이후 마지막 오류 전달
+```
+
+여러 저장소를 조회하는 전체 Effect에는 10초 timeout을 적용합니다. 제한 시간을 넘으면 `TimeoutError`로 실패하고 진행 중인 자식 작업은 interruption됩니다.
+
+```text
+개별 조회       조건부 exponential retry
+전체 Effect.all 동시에 최대 2개
+전체 프로그램   10초 timeout
+```
 
 ## 완료 조건
 
