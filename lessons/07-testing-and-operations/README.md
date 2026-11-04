@@ -21,7 +21,7 @@
 | 5 | `05-metrics-and-tracing.ts` | metrics와 span으로 실행 관찰하기 | 완료 |
 | 6 | `06-stream.ts` | 여러 값을 Stream으로 처리하기 | 완료 |
 | 7 | `07-backpressure.ts` | 생산자와 소비자의 속도 차이 다루기 | 완료 |
-| 8 | `08-cache-and-batching.ts` | 반복 작업을 cache하고 요청 합치기 | 예정 |
+| 8 | `08-cache-and-batching.ts` | 반복 작업을 cache하고 요청 합치기 | 완료 |
 
 ## 01. 테스트 Layer
 
@@ -129,13 +129,29 @@ Backpressure는 생산자가 소비자보다 빠를 때 처리되지 않은 값�
 
 `Stream.runDrain`은 방출된 성공값은 모으지 않으면서 Stream을 끝까지 실행합니다. 값은 버리지만 Stream 내부의 Effect와 오류는 유지됩니다.
 
+## 08. Cache와 Batching
+
+Cache는 같은 키의 반복 조회 결과를 재사용합니다. `Cache.make`로 용량과 lookup Effect를 정의하고, `Cache.get`은 cache miss일 때만 lookup을 실행합니다. 같은 `"effect"` 키를 두 번 조회해도 lookup은 한 번만 실행됩니다.
+
+Batching은 짧은 시간에 들어온 서로 다른 여러 요청을 한 번의 Resolver 실행으로 합칩니다.
+
+```text
+Request          무엇이 필요한지 표현
+RequestResolver  요청들을 실제 결과로 변환
+Effect.request   Request와 Resolver를 연결해 Effect 생성
+```
+
+`RequestResolver.fromFunctionBatched`는 요청 entry 배열을 받고 같은 순서와 개수의 결과를 반환합니다. 세 `GetUserName` Effect를 `Effect.all`의 `concurrency: "unbounded"`로 함께 제출하면 Resolver가 한 번 실행되며 batch 크기는 `[3]`이 됩니다.
+
+Cache는 같은 요청의 결과를 재사용하고, Batching은 동시에 대기 중인 여러 요청을 하나의 외부 작업으로 합친다는 차이가 있습니다.
+
 ## 완료 조건
 
 - [x] 테스트 Layer로 외부 의존성을 결정적인 값으로 교체할 수 있다.
 - [x] `TestClock`으로 실제 시간을 기다리지 않고 시간 기반 로직을 검사할 수 있다.
 - [x] 구조화된 로그와 Config를 프로그램에 적용할 수 있다.
 - [x] Stream의 성공값, 오류, 종료를 설명할 수 있다.
-- [ ] backpressure, cache, batching이 해결하는 문제를 구분할 수 있다.
+- [x] backpressure, cache, batching이 해결하는 문제를 구분할 수 있다.
 
 ## 참고
 
