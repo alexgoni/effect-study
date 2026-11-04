@@ -17,7 +17,7 @@
 | 순서 | 파일 | 내용 | 상태 |
 | --- | --- | --- | --- |
 | 1 | `01-parse-repository.ts` | 외부 저장소 응답을 Schema로 검증하기 | 완료 |
-| 2 | `02-domain-errors.ts` | 네트워크·인증·저장소 없음 오류 구분하기 | 예정 |
+| 2 | `02-domain-errors.ts` | 네트워크·인증·저장소 없음 오류 구분하기 | 완료 |
 | 3 | `03-github-service.ts` | GitHub 조회 능력을 Service 계약으로 정의하기 | 예정 |
 | 4 | `04-live-layer.ts` | 실제 HTTP 구현을 Layer로 제공하기 | 예정 |
 | 5 | `05-test-layer.ts` | 네트워크 없는 테스트 구현 제공하기 | 예정 |
@@ -37,6 +37,19 @@ GitHub API처럼 애플리케이션 외부에서 들어오는 데이터는 검�
 ```
 
 고정 fixture는 HTTP 문제를 섞지 않고 외부 데이터 경계를 검증하기 위한 샘플입니다. 이후 Live Layer에서는 실제 GitHub API를 호출하고, Test Layer에서는 네트워크를 대체하는 테스트 구현을 제공합니다.
+
+## 02. 도메인 오류
+
+GitHub 조회에서 예상 가능한 실패를 하나의 일반 `Error`로 뭉치지 않고 tagged error로 구분합니다.
+
+```text
+NetworkError         네트워크 요청 자체의 실패, 원래 cause 보존
+Unauthorized         인증 실패
+RepositoryNotFound   조회한 owner와 repository 보존
+InvalidResponse      SchemaError를 cause로 보존
+```
+
+네 오류는 `GitHubError` union으로 묶어 GitHub 프로그램의 오류 채널에 사용합니다. 타입 수준에서는 가능한 실패 전체를 표현하고, 런타임의 `Exit.Failure`에는 실제로 발생한 오류 한 개와 해당 필드가 들어갑니다.
 
 ## 완료 조건
 
