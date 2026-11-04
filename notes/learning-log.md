@@ -789,3 +789,17 @@ config.parse(provider)  규칙과 출처를 연결한 Effect
 ```
 
 따라서 같은 `"PORT"` 키라도 `Config.String("PORT")`, `Config.Int("PORT")`, `Config.Port("PORT")`는 각각 다른 변환과 검증을 수행한다.
+
+## Metric과 Span은 무엇이 다른가
+
+로그는 특정 시점의 사건을 기록하고, Metric은 여러 실행의 수치 정보를 집계하며, Span은 특정 작업 한 번의 시작부터 종료까지를 추적한다.
+
+```text
+Log     "결제 요청 시작"
+Metric  결제 요청 총 1,240회
+Span    특정 결제 요청이 90ms 동안 실행됨
+```
+
+Span에는 이름, 시작·종료 시각, 종료 결과, 업무 속성과 부모·자식 관계가 들어간다. `Effect.withSpan(program, "process-orders")`는 프로그램 실행 구간을 Span으로 만들고, `annotateCurrentSpan`은 `orders.count` 같은 정보를 현재 Span에 추가한다.
+
+Span은 실행 주체가 아니다. Fiber가 Effect를 실행하고, Span은 실행 중 특정 작업 구간을 관찰하기 위해 남기는 기록이다.

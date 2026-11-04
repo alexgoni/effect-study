@@ -45,3 +45,16 @@ Fiber A release → 남은 permit 1, Fiber C 진입 가능
 ## Critical section
 
 동시에 너무 많은 작업이 들어가면 안 되는 보호 대상 코드 구간이다. 데이터베이스 연결, 파일 쓰기, 공유 mutable state, 호출 수가 제한된 외부 API 접근 등이 예다. Semaphore의 permit은 전체 Fiber가 아니라 이 구간에 들어가는 동시 작업 수만 제한한다.
+
+## Span
+
+Tracing에서 하나의 작업이 시작해서 끝날 때까지의 실행 구간을 나타내는 기록이다. 이름, 시작·종료 시각, 성공·실패·중단 결과, 업무 속성, 부모·자식 관계 등을 담는다.
+
+```text
+process-order
+├── find-user
+├── check-stock
+└── request-payment
+```
+
+`Effect.withSpan`은 Effect의 실행을 Span으로 감싸고 종료 결과와 함께 Span을 자동으로 닫는다. `Effect.currentSpan`은 현재 활성 Span을 얻고, `Effect.annotateCurrentSpan`은 주문 ID 같은 검색 가능한 정보를 붙인다. Fiber가 작업을 실행하는 단위라면 Span은 그 작업의 특정 구간을 관찰하기 위한 기록이다.
